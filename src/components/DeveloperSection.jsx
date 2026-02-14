@@ -19,7 +19,7 @@ export default function DeveloperSection() {
   ];
 
   return (
-    <section className="min-h-screen bg-[#1a0505] flex flex-col items-center justify-center px-20">
+    <section id="contact" className="min-h-screen bg-[#1a0505] flex flex-col items-center justify-center px-20">
 
       <h2 className="text-4xl font-bold mb-20 text-white">
         Meet The Developers

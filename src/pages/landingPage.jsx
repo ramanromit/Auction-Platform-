@@ -8,6 +8,7 @@ import DeveloperSection from "../components/DeveloperSection";
 
 
 
+
 export default function LandingPage() {
   return (
     <>

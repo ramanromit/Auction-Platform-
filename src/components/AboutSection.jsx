@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 
 export default function AboutSection() {
   return (
-    <section className="min-h-screen bg-[#0f172a] flex items-center px-20">
+   <section id="about" className="min-h-screen bg-[#0f172a] py-32 px-10">
+
 
       <div className="flex w-full items-center justify-between gap-16">
 
