@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import dev1 from "../assets/images/developer.png";
 import dev2 from "../assets/images/developer.png";
 
@@ -5,46 +6,63 @@ export default function DeveloperSection() {
   const developers = [
     {
       name: "Romit Raman",
-      role: "24BIT0558",
+      role: "24BI0558",
+      email: "romit.raman2024@vitstudent.ac.in",
       image: dev1,
-      email:"romit.raman2024@vitstudent.ac.in",
-      desc: "CGPA: 8.68",
-
     },
     {
       name: "Aniket Agrawal",
-      role:"24BIT0533",
+      role: "24BIT0533",
+      email: "aniket.agrawal2024@vitsudent.ac.in",
       image: dev2,
-      email:"aniket.agrawal2024@vitstudent.ac.in",
-      desc: "CGPA: 9.34",
     },
   ];
 
   return (
-    <section className="developer-section">
-      <div className="developer-container">
-        <h2 className="section-title">Meet The Developers</h2>
+    <section className="min-h-screen bg-[#1a0505] flex flex-col items-center justify-center px-20">
 
-        <div className="developer-grid">
-          {developers.map((dev, index) => (
-            <div key={index} className="developer-card">
+      <h2 className="text-4xl font-bold mb-20 text-white">
+        Meet The Developers
+      </h2>
 
-              <img src={dev.image} alt={dev.name} />
+      <div className="flex gap-20">
 
-              <h3>{dev.name}</h3>
-              <p className="developer-role">{dev.role}</p>
-            <p className="developer-role">{dev.email}</p>
-              <p className="developer-desc">{dev.desc}</p>
+        {developers.map((dev, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true }}
+            className="bg-[#1F2937] rounded-3xl p-10 w-96 text-center shadow-2xl hover:scale-105 hover:shadow-red-600/30 hover:shadow-2xl transition-all duration-300"
+          >
 
-              <div className="developer-links">
-                <a href="#">LinkedIn</a>
-                <a href="#">GitHub</a>
-              </div>
-
+            {/* Profile Image */}
+            <div className="flex justify-center mb-6">
+              <img
+                src={dev.image}
+                alt={dev.name}
+                className="w-40 h-40 rounded-full object-cover border-4 border-red-600 shadow-lg"
+              />
             </div>
-          ))}
-        </div>
+
+            <h3 className="text-2xl font-semibold text-white mb-2">
+              {dev.name}
+            </h3>
+
+            <p className="text-red-600 font-medium mb-3">
+              {dev.role}
+            </p>
+
+            <p className="text-gray-400 text-sm">
+              {dev.email}
+            </p>
+
+          </motion.div>
+        ))}
+
       </div>
+
     </section>
   );
 }

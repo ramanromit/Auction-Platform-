@@ -2,29 +2,38 @@ import RotatingItems from "./RotatingItems";
 
 export default function Hero() {
   return (
-    <section className="hero">
+    <section className="min-h-screen bg-[#1a0505] flex items-center px-20">
+      
+      <div className="flex w-full items-center justify-between">
 
-      <div className="hero-left">
-        <h1>
-          Win Rare Items. <span>Outbid Everyone.</span>
-        </h1>
+        {/* LEFT SIDE */}
+        <div className="w-1/2 space-y-6">
+          <h1 className="text-5xl font-bold leading-tight text-white">
+            Win Rare Items.{" "}
+            <span className="text-red-600">Outbid Everyone.</span>
+          </h1>
 
-        <p>
-          LiveLot is a competitive online auction platform where buyers
-          compete in real-time to win exclusive items, and sellers get
-          the highest value for their products.
-        </p>
+          <p className="text-gray-300 text-lg max-w-md">
+            BidNest is a competitive online auction platform where buyers compete in real-time.
+          </p>
 
-        <div className="hero-buttons">
-          <button className="primary-btn">Start Bidding</button>
-          <button className="secondary-btn">Sell an Item</button>
+          <div className="flex gap-4 pt-4">
+            <button className="bg-red-600 px-6 py-3 rounded-lg font-semibold">
+              Start Bidding
+            </button>
+
+            <button className="border border-red-600 text-red-600 px-6 py-3 rounded-lg font-semibold">
+              Sell an Item
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="hero-right">
-        <RotatingItems />
-      </div>
+        {/* RIGHT SIDE */}
+        <div className="w-1/2 flex justify-center items-center relative">
+          <RotatingItems />
+        </div>
 
+      </div>
     </section>
   );
 }
