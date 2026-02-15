@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
+import CountUp from "./CountUp";
+import DecryptedText from "./DecryptedText";
 
 export default function AboutSection() {
   return (
-   <section id="about" className="min-h-screen bg-[#0f172a] py-32 px-10">
+    <section id="about" className="min-h-screen py-32 px-10 relative overflow-hidden">
 
-
-      <div className="flex w-full items-center justify-between gap-16">
+      <div className="flex w-full items-center justify-between gap-16 relative z-10">
 
         {/* LEFT SIDE */}
         <motion.div
@@ -16,7 +17,13 @@ export default function AboutSection() {
           className="w-1/2 space-y-6"
         >
           <h2 className="text-4xl font-bold text-white">
-            About <span className="text-red-600">BidNest</span>
+            <DecryptedText
+              text="About BidNest"
+              speed={50}
+              maxIterations={8}
+              animateOn="view"
+              sequential
+            />
           </h2>
 
           <p className="text-gray-400 text-lg leading-relaxed">
@@ -63,17 +70,41 @@ export default function AboutSection() {
 
             <div className="flex justify-between text-gray-400">
               <span>Active Users</span>
-              <span className="text-red-600 font-bold">10K+</span>
+              <CountUp
+                from={0}
+                to={25}
+                separator=","
+                direction="up"
+                duration={2}
+                className="text-red-600 font-bold"
+                suffix="K+"
+              />
             </div>
 
             <div className="flex justify-between text-gray-400">
               <span>Auctions Hosted</span>
-              <span className="text-red-600 font-bold">5K+</span>
+              <CountUp
+                from={0}
+                to={15}
+                separator=","
+                direction="up"
+                duration={2}
+                className="text-red-600 font-bold"
+                suffix="K+"
+              />
             </div>
 
             <div className="flex justify-between text-gray-400">
               <span>Verified Sellers</span>
-              <span className="text-red-600 font-bold">2K+</span>
+              <CountUp
+                from={0}
+                to={5}
+                separator=","
+                direction="up"
+                duration={2}
+                className="text-red-600 font-bold"
+                suffix="K+"
+              />
             </div>
 
             {/* Pulse Indicator */}

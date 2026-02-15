@@ -1,0 +1,93 @@
+/* Carousel Container with 3D perspective */
+.carousel-container {
+  position: relative;
+  width: 500px;
+  height: 400px;
+  perspective: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Base styling for carousel items */
+.carousel-item {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+  transition: all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Active item - center with glow */
+.carousel-item.active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  width: 300px;
+  height: 300px;
+  filter: drop-shadow(0 30px 60px rgba(220, 38, 38, 0.4)) 
+          drop-shadow(0 0 30px rgba(220, 38, 38, 0.3));
+  z-index: 10;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Left item - previous, smaller and blurred */
+.carousel-item.left {
+  opacity: 0.6;
+  transform: translateX(-150px) scale(0.7);
+  width: 210px;
+  height: 210px;
+  filter: blur(3px) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.3));
+  z-index: 5;
+}
+
+/* Right item - next, smaller and blurred */
+.carousel-item.right {
+  opacity: 0.6;
+  transform: translateX(150px) scale(0.7);
+  width: 210px;
+  height: 210px;
+  filter: blur(3px) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.3));
+  z-index: 5;
+}
+
+/* Shadow beneath the rotating object */
+.carousel-shadow {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 60px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(15px);
+  z-index: 1;
+}
+
+/* Shadow scaling animation synced with carousel */
+@keyframes shadow-scale {
+  0% {
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.4;
+  }
+}
+
+/* Glow pulse animation */
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 30px 60px rgba(220, 38, 38, 0.4)) 
+            drop-shadow(0 0 30px rgba(220, 38, 38, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 30px 60px rgba(220, 38, 38, 0.6)) 
+            drop-shadow(0 0 40px rgba(220, 38, 38, 0.5));
+  }
+}

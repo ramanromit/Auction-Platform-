@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
@@ -14,72 +14,115 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) navigate("/dashboard");
+  }, [navigate]);
+
+  // Handle Input Change
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Remove error when user types
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[name];
+      delete copy.general;
+      return copy;
     });
   };
 
-  const validateForm = () => {
-    let newErrors = {};
+  // Validation
+  const validateForm = (data) => {
+    const newErrors = {};
 
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = "Full name is required";
-    }
+    const name = data.name.trim();
+    const email = data.email.trim();
+    const password = data.password;
+    const confirmPassword = data.confirmPassword;
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
+    // Name
+    if (!name) newErrors.name = "Full name is required";
+    else if (name.length < 2)
+      newErrors.name = "Name must be at least 2 characters";
+    else if (!/^[A-Za-z][A-Za-z' -]*$/.test(name))
+      newErrors.name = "Only letters, spaces, - or ' allowed";
 
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
+    // Email
+    if (!email) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      newErrors.email = "Enter valid email";
 
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
+    // Password
+    if (!password) newErrors.password = "Password required";
+    else if (password.length < 8)
+      newErrors.password = "Password must be 8+ characters";
+    else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password))
+      newErrors.password = "Must contain letter & number";
+
+    // Confirm Password
+    if (!confirmPassword)
+      newErrors.confirmPassword = "Confirm password required";
+    else if (password !== confirmPassword)
       newErrors.confirmPassword = "Passwords do not match";
-    }
 
-    // Check if user already exists
-    const existingUser = JSON.parse(localStorage.getItem("user"));
-    if (existingUser && existingUser.email === formData.email) {
-      newErrors.email = "User already exists with this email";
-    }
+    // Duplicate email check
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("registeredUser"));
+      if (storedUser && storedUser.email === email) {
+        newErrors.email = "User already exists";
+      }
+    } catch {}
 
     return newErrors;
   };
 
+  // Submit
   const handleRegister = (e) => {
     e.preventDefault();
 
-    const validationErrors = validateForm();
-    setErrors(validationErrors);
+    const cleanedData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    };
 
-    if (Object.keys(validationErrors).length === 0) {
-      localStorage.setItem("user", JSON.stringify(formData));
-      setSuccess("Registration successful! Redirecting to login...");
+    const validationErrors = validateForm(cleanedData);
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setSuccess("");
+      return;
     }
+
+    // Save user
+    localStorage.setItem(
+      "registeredUser",
+      JSON.stringify({
+        name: cleanedData.name,
+        email: cleanedData.email,
+        password: cleanedData.password,
+      })
+    );
+
+    setErrors({});
+    setSuccess("Registration successful! Redirecting...");
+
+    setTimeout(() => navigate("/login"), 2000);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e293b]">
-      
       <form
+        autoComplete="off"
+        noValidate
         onSubmit={handleRegister}
         className="bg-[#1f2937] p-10 rounded-2xl w-[420px] shadow-2xl border border-gray-700"
       >
@@ -96,6 +139,8 @@ export default function Register() {
           type="text"
           name="name"
           placeholder="Full Name"
+          autoComplete="name"
+          value={formData.name}
           onChange={handleChange}
           className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
         />
@@ -108,6 +153,8 @@ export default function Register() {
           type="email"
           name="email"
           placeholder="Email Address"
+          autoComplete="new-email"
+          value={formData.email}
           onChange={handleChange}
           className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
         />
@@ -120,6 +167,8 @@ export default function Register() {
           type="password"
           name="password"
           placeholder="Password"
+          autoComplete="new-password"
+          value={formData.password}
           onChange={handleChange}
           className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
         />
@@ -132,6 +181,8 @@ export default function Register() {
           type="password"
           name="confirmPassword"
           placeholder="Confirm Password"
+          autoComplete="new-password"
+          value={formData.confirmPassword}
           onChange={handleChange}
           className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
         />
@@ -141,10 +192,15 @@ export default function Register() {
           </p>
         )}
 
-        {/* Success Message */}
+        {/* Success */}
         {success && (
-          <p className="text-green-500 text-sm mb-4 text-center">
-            {success}
+          <p className="text-green-500 text-sm mb-4 text-center">{success}</p>
+        )}
+
+        {/* General Error */}
+        {errors.general && (
+          <p className="text-red-500 text-sm mb-4 text-center">
+            {errors.general}
           </p>
         )}
 

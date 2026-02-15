@@ -1,3 +1,5 @@
+import DecryptedText from "./DecryptedText";
+
 export default function HowItWorks() {
   const steps = [
     {
@@ -18,39 +20,51 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="min-h-screen bg-[#0f172a] flex flex-col justify-center items-center px-16">
+    <section className="min-h-screen flex flex-col justify-center items-center px-16 relative overflow-hidden">
 
-      <h2 className="text-4xl font-bold mb-20 text-white">How It Works</h2>
+      <div className="relative z-10">
 
-      <div className="flex gap-16">
+        <h2 className="text-4xl font-bold mb-20 text-white">
+          <DecryptedText
+            text="How It Works"
+            speed={50}
+            maxIterations={8}
+            animateOn="view"
+            sequential
+          />
+        </h2>
 
-        {steps.map((step, i) => (
-          <div key={i} className="cube-card w-64 h-48 perspective relative">
+        <div className="flex gap-16">
 
-            <div className="cube relative w-full h-full">
+          {steps.map((step, i) => (
+            <div key={i} className="cube-card w-64 h-48 perspective relative">
 
-              {/* FRONT */}
-              <div className="cube-face cube-front flex flex-col items-center justify-center text-white shadow-xl">
+              <div className="cube relative w-full h-full">
 
-                <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center mb-4 font-bold">
-                  {step.num}
+                {/* FRONT */}
+                <div className="cube-face cube-front flex flex-col items-center justify-center text-white shadow-xl">
+
+                  <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center mb-4 font-bold">
+                    {step.num}
+                  </div>
+
+                  <h3 className="font-semibold">{step.title}</h3>
+
                 </div>
 
-                <h3 className="font-semibold">{step.title}</h3>
+                {/* BOTTOM */}
+                <div className="cube-face cube-bottom flex items-center justify-center text-white text-center px-6 shadow-xl">
 
-              </div>
+                  <p>{step.desc}</p>
 
-              {/* BOTTOM */}
-              <div className="cube-face cube-bottom flex items-center justify-center text-white text-center px-6 shadow-xl">
-
-                <p>{step.desc}</p>
+                </div>
 
               </div>
 
             </div>
+          ))}
 
-          </div>
-        ))}
+        </div>
 
       </div>
 
