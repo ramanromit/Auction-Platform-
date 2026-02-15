@@ -1,25 +1,25 @@
 import DecryptedText from "./DecryptedText";
-import watch from "../assets/images/image1.png";
-import shoes from "../assets/images/image2.png";
-import guitar from "../assets/images/image3.png";
+import bag from "../assets/images/image6.png";
+import headphones from "../assets/images/image7.png";
+import telescope from "../assets/images/image5.png";
 
 export default function FeaturedAuctions() {
 
   const items = [
     {
-      title: "Luxury Watch",
+      title: "Luxury bag",
       bid: "₹45,000",
-      image: watch
+      image: bag
     },
     {
-      title: "Premium Sneakers",
+      title: "Premium Headphones",
       bid: "₹18,500",
-      image: shoes
+      image: headphones
     },
     {
-      title: "Electric Guitar",
+      title: "telescope",
       bid: "₹72,000",
-      image: guitar
+      image: telescope
     }
   ];
 

@@ -35,9 +35,11 @@ export default function Hero() {
               </button>
             </Link>
 
-            <button className="border border-red-600 text-red-600 px-6 py-3 rounded-lg font-semibold">
-              Sell an Item
-            </button>
+            <Link to="/sell">
+              <button className="border border-red-600 text-red-600 px-6 py-3 rounded-lg font-semibold hover:bg-red-600/10 transition">
+                Sell an Item
+              </button>
+            </Link>
           </div>
         </div>
 

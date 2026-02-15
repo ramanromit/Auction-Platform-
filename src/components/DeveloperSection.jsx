@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import DecryptedText from "./DecryptedText";
+
 import dev1 from "../assets/images/developer.png";
 import dev2 from "../assets/images/developer.png";
 
