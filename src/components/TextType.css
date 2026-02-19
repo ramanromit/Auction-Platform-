@@ -1,6 +1,14 @@
 .text-type {
-  display: inline-block;
-  white-space: pre-wrap;
+  display: block;
+  white-space: normal;
+  width: 100%;
+  word-break: break-word;
+}
+
+.text-type__content {
+  display: inline;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .text-type__cursor {

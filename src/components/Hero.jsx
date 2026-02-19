@@ -11,17 +11,32 @@ export default function Hero() {
 
         {/* LEFT SIDE */}
         <div className="w-1/2 space-y-6">
-          <div className="h-24 flex items-center mb-16">
-            <TextType
-              text={["Win Rare Items. Outbid Everyone."]}
-              typingSpeed={50}
-              pauseDuration={9999999}
-              showCursor={false}
-              cursorCharacter="_"
-              deletingSpeed={0}
-              variableSpeedEnabled={false}
-              className="text-6xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-red-200 to-red-400 drop-shadow-lg"
-            />
+          <div className="mb-16 h-40">
+            <div>
+              <TextType
+                text={["Win Rare Items."]}
+                typingSpeed={50}
+                pauseDuration={800}
+                showCursor={false}
+                cursorCharacter="_"
+                deletingSpeed={9999999}
+                variableSpeedEnabled={false}
+                loop={false}
+                className="text-6xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-red-200 to-red-400 drop-shadow-lg block"
+              />
+              <TextType
+                text={["Outbid Everyone."]}
+                typingSpeed={50}
+                pauseDuration={9999999}
+                showCursor={false}
+                cursorCharacter="_"
+                deletingSpeed={0}
+                variableSpeedEnabled={false}
+                loop={false}
+                initialDelay={900}
+                className="text-6xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-red-200 to-red-400 drop-shadow-lg block"
+              />
+            </div>
           </div>
 
           <p className="text-gray-200 text-lg max-w-md font-medium tracking-wide">
