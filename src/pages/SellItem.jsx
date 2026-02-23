@@ -43,44 +43,59 @@ export default function SellItem() {
 
     const validateStep1 = () => {
         const newErrors = {};
-        if (!formData.title.trim()) newErrors.title = "Title is required";
-        if (!formData.description.trim()) newErrors.description = "Description is required";
+        if (!formData.title.trim())
+            newErrors.title = "Product name is required";
+        else if (formData.title.trim().length < 3)
+            newErrors.title = "Product name must be at least 3 characters";
+
+        if (!formData.description.trim())
+            newErrors.description = "Description is required";
+        else if (formData.description.trim().length < 10)
+            newErrors.description = "Description must be at least 10 characters";
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const validateStep2 = () => {
         const newErrors = {};
-        if (!formData.image) newErrors.image = "Product image is required";
-        if (!formData.startingBid.trim()) newErrors.startingBid = "Starting bid is required";
-        if (parseInt(formData.startingBid) <= 0) newErrors.startingBid = "Bid must be greater than 0";
+        if (!formData.image)
+            newErrors.image = "Product image is required";
+
+        const bidValue = Number(formData.startingBid);
+        if (!formData.startingBid.toString().trim())
+            newErrors.startingBid = "Starting bid is required";
+        else if (isNaN(bidValue) || bidValue <= 0)
+            newErrors.startingBid = "Starting bid must be a positive number";
+        else if (bidValue < 100)
+            newErrors.startingBid = "Minimum starting bid is ₹100";
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleStepChange = (step) => {
-        if (step > 1) {
-            // Moving to next step, validate current step
-            if (step === 2 && !validateStep1()) return;
-            if (step === 3 && !validateStep2()) return;
-        }
-        setErrors({});
+    // Called by Stepper before advancing — return false to block the step change
+    const handleBeforeNext = (step) => {
+        let valid = true;
+        if (step === 1) valid = validateStep1();
+        if (step === 2) valid = validateStep2();
+        if (valid) setErrors({});
+        return valid;
     };
 
     const handleSubmit = () => {
-        if (validateStep2()) {
-            const newItem = {
-                title: formData.title,
-                bid: `₹${formData.startingBid}`,
-                img: formData.imagePreview,
-                description: formData.description,
-                category: formData.category,
-                condition: formData.condition
-            };
-
-            addItem(newItem);
-            navigate('/dashboard');
-        }
+        const newItem = {
+            title: formData.title,
+            bid: Number(formData.startingBid),
+            img: formData.imagePreview,
+            description: formData.description,
+            category: formData.category,
+            condition: formData.condition,
+            id: Date.now(),
+            bids: []
+        };
+        addItem(newItem);
+        navigate('/dashboard');
     };
 
     return (
@@ -110,7 +125,7 @@ export default function SellItem() {
 
                         <Stepper
                             initialStep={1}
-                            onStepChange={handleStepChange}
+                            beforeNext={handleBeforeNext}
                             backButtonText="Previous"
                             nextButtonText="Next"
                             onFinalStepCompleted={handleSubmit}
@@ -119,7 +134,7 @@ export default function SellItem() {
                             <Step>
                                 <div className="space-y-6">
                                     <h3 className="text-2xl font-bold text-white mb-4">Step 1: Item Details</h3>
-                                    
+
                                     <div>
                                         <label className="block text-gray-400 mb-2">Item Title *</label>
                                         <input
@@ -127,10 +142,17 @@ export default function SellItem() {
                                             name="title"
                                             value={formData.title}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-red-500 transition"
+                                            className={`w-full bg-gray-900/50 border rounded-lg p-3 text-white focus:outline-none transition ${errors.title
+                                                ? 'border-red-500 focus:border-red-500'
+                                                : 'border-gray-700 focus:border-red-500'
+                                                }`}
                                             placeholder="e.g. Vintage Camera"
                                         />
-                                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                                        {errors.title && (
+                                            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                                                <span>⚠</span> {errors.title}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,10 +197,17 @@ export default function SellItem() {
                                             value={formData.description}
                                             onChange={handleChange}
                                             rows="5"
-                                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-red-500 transition resize-none"
+                                            className={`w-full bg-gray-900/50 border rounded-lg p-3 text-white focus:outline-none transition resize-none ${errors.description
+                                                ? 'border-red-500 focus:border-red-500'
+                                                : 'border-gray-700 focus:border-red-500'
+                                                }`}
                                             placeholder="Describe your item condition, history, features, etc..."
                                         ></textarea>
-                                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                                        {errors.description && (
+                                            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                                                <span>⚠</span> {errors.description}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </Step>
@@ -187,7 +216,7 @@ export default function SellItem() {
                             <Step>
                                 <div className="space-y-6">
                                     <h3 className="text-2xl font-bold text-white mb-4">Step 2: Image & Pricing</h3>
-                                    
+
                                     <div>
                                         <label className="block text-gray-400 mb-3">Product Image *</label>
                                         <div className="w-full h-64 border-2 border-dashed border-gray-600 rounded-xl flex items-center justify-center relative overflow-hidden bg-gray-900/50 hover:border-red-500/50 transition cursor-pointer group">
@@ -207,7 +236,11 @@ export default function SellItem() {
                                                 </div>
                                             )}
                                         </div>
-                                        {errors.image && <p className="text-red-500 text-sm mt-2">{errors.image}</p>}
+                                        {errors.image && (
+                                            <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                                                <span>⚠</span> {errors.image}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -217,11 +250,18 @@ export default function SellItem() {
                                             name="startingBid"
                                             value={formData.startingBid}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-red-500 transition"
+                                            className={`w-full bg-gray-900/50 border rounded-lg p-3 text-white focus:outline-none transition ${errors.startingBid
+                                                ? 'border-red-500 focus:border-red-500'
+                                                : 'border-gray-700 focus:border-red-500'
+                                                }`}
                                             placeholder="e.g. 5000"
                                             min="1"
                                         />
-                                        {errors.startingBid && <p className="text-red-500 text-sm mt-1">{errors.startingBid}</p>}
+                                        {errors.startingBid && (
+                                            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                                                <span>⚠</span> {errors.startingBid}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </Step>
@@ -230,7 +270,7 @@ export default function SellItem() {
                             <Step>
                                 <div className="space-y-6">
                                     <h3 className="text-2xl font-bold text-white mb-6">Step 3: Review & Submit</h3>
-                                    
+
                                     <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
                                         {/* Image Preview */}
                                         <div className="mb-6">

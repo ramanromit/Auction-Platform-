@@ -129,9 +129,11 @@ export default function Dashboard() {
                       <p className="text-gray-400 mb-4">
                         Current Bid: {item.bid}
                       </p>
-                      <button className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-md transition font-medium shadow-lg shadow-red-600/20">
-                        Place Bid
-                      </button>
+                      <Link to={`/bid/${item.id}`} className="block w-full">
+                        <button className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-md transition font-medium shadow-lg shadow-red-600/20">
+                          Place Bid
+                        </button>
+                      </Link>
                     </div>
                   </motion.div>
                 ))}

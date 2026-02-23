@@ -42,41 +42,53 @@ export default function Register() {
   const validateForm = (data) => {
     const newErrors = {};
 
+    const nameRaw = data.name; // Keep original to check for leading spaces
     const name = data.name.trim();
     const email = data.email.trim();
     const password = data.password;
     const confirmPassword = data.confirmPassword;
 
-    // Name
-    if (!name) newErrors.name = "Full name is required";
-    else if (name.length < 2)
+    // Name Validation
+    if (!name) {
+      newErrors.name = "Full name is required";
+    } else if (nameRaw !== nameRaw.trimStart()) {
+      newErrors.name = "Name cannot start with blank spaces";
+    } else if (name.length < 2) {
       newErrors.name = "Name must be at least 2 characters";
-    else if (!/^[A-Za-z][A-Za-z' -]*$/.test(name))
-      newErrors.name = "Only letters, spaces, - or ' allowed";
+    } else if (!/^[A-Za-z]+(\s[A-Za-z]+)*$/.test(name)) {
+      newErrors.name = "Name can only contain letters and spaces between names";
+    }
 
-    // Email
-    if (!email) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      newErrors.email = "Enter valid email";
+    // Email Validation
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    } else if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)) {
+      newErrors.email = "Email format is invalid";
+    }
 
-    // Password
-    if (!password) newErrors.password = "Password required";
-    else if (password.length < 8)
-      newErrors.password = "Password must be 8+ characters";
-    else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password))
-      newErrors.password = "Must contain letter & number";
+    // Password Validation
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+      newErrors.password = "Password must contain at least one letter and one number";
+    }
 
-    // Confirm Password
-    if (!confirmPassword)
-      newErrors.confirmPassword = "Confirm password required";
-    else if (password !== confirmPassword)
+    // Confirm Password Validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Confirm password is required";
+    } else if (password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
+    }
 
     // Duplicate email check
     try {
       const storedUser = JSON.parse(localStorage.getItem("registeredUser"));
       if (storedUser && storedUser.email === email) {
-        newErrors.email = "User already exists";
+        newErrors.email = "User already exists with this email";
       }
     } catch {}
 
@@ -87,20 +99,21 @@ export default function Register() {
   const handleRegister = (e) => {
     e.preventDefault();
 
-    const cleanedData = {
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      password: formData.password,
-      confirmPassword: formData.confirmPassword,
-    };
-
-    const validationErrors = validateForm(cleanedData);
+    // Validate with original data first
+    const validationErrors = validateForm(formData);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setSuccess("");
       return;
     }
+
+    const cleanedData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    };
 
     // Save user
     localStorage.setItem(
@@ -142,7 +155,9 @@ export default function Register() {
           autoComplete="name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
+          className={`w-full mb-1 p-3 rounded bg-[#111827] text-white border ${
+            errors.name ? "border-red-500" : "border-gray-600"
+          } focus:outline-none focus:border-red-400 transition`}
         />
         {errors.name && (
           <p className="text-red-500 text-sm mb-3">{errors.name}</p>
@@ -156,7 +171,9 @@ export default function Register() {
           autoComplete="new-email"
           value={formData.email}
           onChange={handleChange}
-          className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
+          className={`w-full mb-1 p-3 rounded bg-[#111827] text-white border ${
+            errors.email ? "border-red-500" : "border-gray-600"
+          } focus:outline-none focus:border-red-400 transition`}
         />
         {errors.email && (
           <p className="text-red-500 text-sm mb-3">{errors.email}</p>
@@ -170,7 +187,9 @@ export default function Register() {
           autoComplete="new-password"
           value={formData.password}
           onChange={handleChange}
-          className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
+          className={`w-full mb-1 p-3 rounded bg-[#111827] text-white border ${
+            errors.password ? "border-red-500" : "border-gray-600"
+          } focus:outline-none focus:border-red-400 transition`}
         />
         {errors.password && (
           <p className="text-red-500 text-sm mb-3">{errors.password}</p>
@@ -184,7 +203,9 @@ export default function Register() {
           autoComplete="new-password"
           value={formData.confirmPassword}
           onChange={handleChange}
-          className="w-full mb-1 p-3 rounded bg-[#111827] text-white border border-gray-600"
+          className={`w-full mb-1 p-3 rounded bg-[#111827] text-white border ${
+            errors.confirmPassword ? "border-red-500" : "border-gray-600"
+          } focus:outline-none focus:border-red-400 transition`}
         />
         {errors.confirmPassword && (
           <p className="text-red-500 text-sm mb-3">

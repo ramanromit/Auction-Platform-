@@ -6,8 +6,9 @@ import './Stepper.css';
 export default function Stepper({
   children,
   initialStep = 1,
-  onStepChange = () => {},
-  onFinalStepCompleted = () => {},
+  onStepChange = () => { },
+  onFinalStepCompleted = () => { },
+  beforeNext = null,
   stepCircleContainerClassName = '',
   stepContainerClassName = '',
   contentClassName = '',
@@ -45,6 +46,7 @@ export default function Stepper({
 
   const handleNext = () => {
     if (!isLastStep) {
+      if (beforeNext && !beforeNext(currentStep)) return;
       setDirection(1);
       updateStep(currentStep + 1);
     }

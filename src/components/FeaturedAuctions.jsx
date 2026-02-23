@@ -2,26 +2,36 @@ import DecryptedText from "./DecryptedText";
 import bag from "../assets/images/image6.png";
 import headphones from "../assets/images/image7.png";
 import telescope from "../assets/images/image5.png";
+import { useNavigate } from "react-router-dom";
 
 export default function FeaturedAuctions() {
 
+  const navigate = useNavigate();
+
   const items = [
     {
+      id: 1,
       title: "Luxury bag",
       bid: "₹45,000",
       image: bag
     },
     {
+      id: 2,
       title: "Premium Headphones",
       bid: "₹18,500",
       image: headphones
     },
     {
-      title: "telescope",
+      id: 3,
+      title: "Telescope",
       bid: "₹72,000",
       image: telescope
     }
   ];
+
+  const handlePlaceBid = (id) => {
+    navigate(`/bid/${id}`);
+  };
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-20 relative overflow-hidden">
@@ -63,7 +73,10 @@ export default function FeaturedAuctions() {
                 Current Bid: <span className="text-red-500 font-semibold">{item.bid}</span>
               </p>
 
-              <button className="bg-red-600 hover:bg-red-700 w-full py-3 rounded-lg font-semibold transition">
+              <button
+                onClick={() => handlePlaceBid(item.id)}
+                className="bg-red-600 hover:bg-red-700 w-full py-3 rounded-lg font-semibold transition"
+              >
                 Place Bid
               </button>
 
