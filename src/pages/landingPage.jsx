@@ -20,8 +20,6 @@ export default function LandingPage() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Determine hue based on visible section
-            // Hero (-110), HowItWorks (-20), Featured (-110), About (-20), Developer (-110)
             if (entry.target === heroRef.current) setHue(-110);
             else if (entry.target === howItWorksRef.current) setHue(-20);
             else if (entry.target === featuredRef.current) setHue(-110);
@@ -30,7 +28,7 @@ export default function LandingPage() {
           }
         });
       },
-      { threshold: 0.5 } // Trigger when 50% of the section is visible
+      { threshold: 0.5 }
     );
 
     const sections = [heroRef.current, howItWorksRef.current, featuredRef.current, aboutRef.current, developerRef.current];

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
+import { GoogleLogin } from "@react-oauth/google";
 import Navbar from "../components/navbar";
 
 export default function AuthPage() {
@@ -17,6 +19,7 @@ export default function AuthPage() {
 
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Handle Input Change
   const handleChange = (e) => {
@@ -81,21 +84,13 @@ export default function AuthPage() {
       } else if (password !== confirmPassword) {
         newErrors.confirmPassword = "Passwords do not match";
       }
-
-      // Duplicate email check
-      try {
-        const storedUser = JSON.parse(localStorage.getItem("registeredUser"));
-        if (storedUser && storedUser.email === email) {
-          newErrors.email = "User already exists with this email";
-        }
-      } catch {}
     }
 
     return newErrors;
   };
 
   // Handle Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationErrors = validateForm(formData);
@@ -106,43 +101,51 @@ export default function AuthPage() {
       return;
     }
 
-    if (isLogin) {
-      // Login logic
-      const storedUser = JSON.parse(localStorage.getItem("registeredUser"));
-      const email = formData.email.trim();
-      const password = formData.password;
+    setLoading(true);
 
-      if (storedUser && storedUser.email === email && storedUser.password === password) {
-        localStorage.setItem("user", "true");
+    if (isLogin) {
+      // Login logic via axios
+      try {
+        const config = {
+          headers: { 'Content-type': 'application/json' },
+        };
+        const { data } = await axios.post(
+          'http://localhost:5000/api/users/login',
+          { email: formData.email.trim(), password: formData.password },
+          config
+        );
+
+        localStorage.setItem("userInfo", JSON.stringify(data));
         setErrors({});
         setSuccess("Login successful! Redirecting...");
         setTimeout(() => navigate("/dashboard"), 1500);
-      } else {
-        setErrors({ general: "Invalid email or password" });
+      } catch (error) {
+        setErrors({ general: error.response && error.response.data.message ? error.response.data.message : error.message });
         setSuccess("");
       }
     } else {
-      // Register logic
-      const cleanedData = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-      };
+      // Register logic via axios
+      try {
+        const config = {
+          headers: { 'Content-type': 'application/json' },
+        };
+        const { data } = await axios.post(
+          'http://localhost:5000/api/users',
+          { name: formData.name.trim(), email: formData.email.trim(), password: formData.password },
+          config
+        );
 
-      localStorage.setItem(
-        "registeredUser",
-        JSON.stringify({
-          name: cleanedData.name,
-          email: cleanedData.email,
-          password: cleanedData.password,
-        })
-      );
-
-      localStorage.setItem("user", "true");
-      setErrors({});
-      setSuccess("Registration successful! Redirecting...");
-      setTimeout(() => navigate("/dashboard"), 1500);
+        localStorage.setItem("userInfo", JSON.stringify(data));
+        setErrors({});
+        setSuccess("Registration successful! Redirecting...");
+        setTimeout(() => navigate("/dashboard"), 1500);
+      } catch (error) {
+        setErrors({ general: error.response && error.response.data.message ? error.response.data.message : error.message });
+        setSuccess("");
+      }
     }
+
+    setLoading(false);
   };
 
   const switchMode = () => {
@@ -160,6 +163,30 @@ export default function AuthPage() {
     } else {
       navigate("/auth?mode=login");
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const config = { headers: { 'Content-type': 'application/json' } };
+      const { data } = await axios.post(
+        'http://localhost:5000/api/users/google',
+        { token: credentialResponse.credential },
+        config
+      );
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      setErrors({});
+      setSuccess("Google Login successful! Redirecting...");
+      setTimeout(() => navigate("/dashboard"), 1500);
+    } catch (error) {
+      setErrors({ general: error.response?.data?.message || 'Google authentication failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrors({ general: "Google Sign In was unsuccessful. Try again." });
   };
 
   return (
@@ -256,12 +283,32 @@ export default function AuthPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition"
+              disabled={loading}
+              className={`w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {isLogin ? "Login" : "Register"}
+              {loading ? "Processing..." : (isLogin ? "Login" : "Register")}
             </button>
 
           </form>
+
+          <div className="relative flex items-center justify-center my-6">
+            <div className="absolute left-0 right-0 h-px bg-white/10"></div>
+            <span className="bg-[#1a0505] px-4 text-sm text-gray-400 relative z-10">Or</span>
+          </div>
+
+          <div className="flex justify-center w-full">
+            <div className="w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_blue"
+                size="large"
+                width="100%"
+                text="continue_with"
+                shape="rectangular"
+              />
+            </div>
+          </div>
 
           <p className="text-gray-400 text-center mt-6">
             {isLogin
