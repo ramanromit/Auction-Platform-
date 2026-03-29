@@ -1,9 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const {
+  createAuctionItem,
+  getAuctionItems,
+  getMyAuctionItems,
+  getAuctionItemById,
+} = require('../controllers/auctionController');
+const { protect } = require('../middleware/authMiddleware');
 
-// Placeholder for auction routes
-router.get('/', (req, res) => {
-  res.send('Auction routes placeholder');
-});
+// Public — returns all active auction items
+router.get('/', getAuctionItems);
+
+// Protected routes
+router.post('/', protect, createAuctionItem);
+router.get('/mine', protect, getMyAuctionItems);
+
+// Public
+router.get('/:id', getAuctionItemById);
 
 module.exports = router;

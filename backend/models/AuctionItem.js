@@ -23,6 +23,11 @@ const auctionItemSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    condition: {
+      type: String,
+      required: true,
+      default: 'Good',
+    },
     startingPrice: {
       type: Number,
       required: true,
@@ -36,6 +41,11 @@ const auctionItemSchema = mongoose.Schema(
     endTime: {
       type: Date,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'ended', 'sold'],
+      default: 'active',
     },
     bids: [
       {

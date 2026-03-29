@@ -1,5 +1,7 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useCallback } from 'react';
+import axios from 'axios';
 
+const API_URL = 'http://localhost:5000/api/auctions';
 const AuctionContext = createContext();
 
 export const useAuction = () => {
@@ -10,27 +12,104 @@ export const useAuction = () => {
     return context;
 };
 
+// Helper to get auth config
+const getAuthConfig = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (userInfo && userInfo.token) {
+        return {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+    }
+    return { headers: { 'Content-Type': 'application/json' } };
+};
+
 export const AuctionProvider = ({ children }) => {
-    const [items, setItems] = useState([
-        { id: 1, title: "Luxury Watch", bid: 45000, img: "/src/assets/images/image1.png", bids: [] },
-        { id: 2, title: "Premium Sneakers", bid: 12500, img: "/src/assets/images/image2.png", bids: [] },
-        { id: 3, title: "Electric Guitar", bid: 30000, img: "/src/assets/images/image3.png", bids: [] },
-        { id: 4, title: "Sony Headphones", bid: 15000, img: "/src/assets/images/image1.png", bids: [] },
-        { id: 5, title: "Gaming Console", bid: 35000, img: "/src/assets/images/image2.png", bids: [] },
-        { id: 6, title: "VR Headset", bid: 28000, img: "/src/assets/images/image3.png", bids: [] }
-    ]);
+    const [items, setItems] = useState([]);
+    const [myItems, setMyItems] = useState([]);
+    const [itemsLoading, setItemsLoading] = useState(false);
+    const [myItemsLoading, setMyItemsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    const addItem = (item) => {
-        setItems((prevItems) => [item, ...prevItems]);
-    };
+    // Fetch all active auction items (excludes user's own if logged in)
+    const fetchItems = useCallback(async () => {
+        try {
+            setItemsLoading(true);
+            setError(null);
+            const config = getAuthConfig();
+            const { data } = await axios.get(API_URL, config);
+            setItems(data);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to fetch auctions');
+            console.error('fetchItems error:', err.message);
+        } finally {
+            setItemsLoading(false);
+        }
+    }, []);
 
+    // Fetch current user's auction items
+    const fetchMyItems = useCallback(async () => {
+        try {
+            setMyItemsLoading(true);
+            setError(null);
+            const config = getAuthConfig();
+            const { data } = await axios.get(`${API_URL}/mine`, config);
+            setMyItems(data);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to fetch your items');
+            console.error('fetchMyItems error:', err.message);
+        } finally {
+            setMyItemsLoading(false);
+        }
+    }, []);
+
+    // Fetch single item by ID
+    const fetchItemById = useCallback(async (id) => {
+        try {
+            const { data } = await axios.get(`${API_URL}/${id}`);
+            return data;
+        } catch (err) {
+            console.error('fetchItemById error:', err.message);
+            return null;
+        }
+    }, []);
+
+    // Create a new auction item
+    const addItem = useCallback(async (itemData) => {
+        try {
+            setMyItemsLoading(true);
+            setError(null);
+            const config = getAuthConfig();
+            const { data } = await axios.post(API_URL, itemData, config);
+            // Add to myItems (seller's own listings), NOT live auctions items
+            setMyItems((prev) => [data, ...prev]);
+            return data;
+        } catch (err) {
+            const message = err.response?.data?.message || 'Failed to create auction item';
+            setError(message);
+            throw new Error(message);
+        } finally {
+            setMyItemsLoading(false);
+        }
+    }, []);
+
+    // Reset all state (call on logout)
+    const resetState = useCallback(() => {
+        setItems([]);
+        setMyItems([]);
+        setError(null);
+    }, []);
+
+    // Local-only placeBid (no backend for now)
     const placeBid = (itemId, bidAmount) => {
         setItems((prevItems) =>
             prevItems.map((item) =>
-                item.id === itemId
+                item._id === itemId
                     ? {
                         ...item,
-                        bid: bidAmount,
+                        currentPrice: bidAmount,
                         bids: [...item.bids, { amount: bidAmount, time: new Date().toLocaleTimeString() }]
                     }
                     : item
@@ -39,7 +118,19 @@ export const AuctionProvider = ({ children }) => {
     };
 
     return (
-        <AuctionContext.Provider value={{ items, addItem, placeBid }}>
+        <AuctionContext.Provider value={{
+            items,
+            myItems,
+            itemsLoading,
+            myItemsLoading,
+            error,
+            fetchItems,
+            fetchMyItems,
+            fetchItemById,
+            addItem,
+            placeBid,
+            resetState,
+        }}>
             {children}
         </AuctionContext.Provider>
     );

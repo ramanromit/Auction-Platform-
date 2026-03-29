@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuction } from "../context/AuctionContext";
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { resetState } = useAuction();
   const [userInfo, setUserInfo] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -31,6 +33,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("userInfo");
+    resetState(); // Clear all cached auction data from context
     setUserInfo(null);
     setShowDropdown(false);
     navigate("/");

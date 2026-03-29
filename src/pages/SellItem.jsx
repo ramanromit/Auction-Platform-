@@ -16,11 +16,44 @@ export default function SellItem() {
         category: 'Electronics',
         condition: 'Like New',
         startingBid: '',
+        endDate: '',
         image: null,
-        imagePreview: null
+        imagePreview: null,
+        imageBase64: null,
     });
 
     const [errors, setErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+
+    // Check if user is logged in
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo) {
+        return (
+            <div className="min-h-screen bg-[#0f172a] text-white relative overflow-hidden">
+                <div className="fixed inset-0 w-full h-full pointer-events-none z-0">
+                    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                        <DarkVeil hueShift={-110} noiseIntensity={0} scanlineIntensity={0} speed={0.7} />
+                    </div>
+                </div>
+                <div className="relative z-10">
+                    <Navbar />
+                    <div className="pt-28 flex flex-col items-center justify-center px-4">
+                        <div className="bg-[#111827]/80 backdrop-blur-md p-10 rounded-2xl border border-gray-800/50 shadow-2xl text-center max-w-md">
+                            <h2 className="text-2xl font-bold text-red-500 mb-4">Login Required</h2>
+                            <p className="text-gray-400 mb-6">You need to be logged in to sell items.</p>
+                            <button
+                                onClick={() => navigate('/auth')}
+                                className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition"
+                            >
+                                Go to Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,7 +67,19 @@ export default function SellItem() {
         const file = e.target.files[0];
         if (file) {
             const preview = URL.createObjectURL(file);
-            setFormData(prev => ({ ...prev, image: file, imagePreview: preview }));
+
+            // Convert to base64
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({
+                    ...prev,
+                    image: file,
+                    imagePreview: preview,
+                    imageBase64: reader.result,
+                }));
+            };
+            reader.readAsDataURL(file);
+
             if (errors.image) {
                 setErrors(prev => ({ ...prev, image: null }));
             }
@@ -70,11 +115,19 @@ export default function SellItem() {
         else if (bidValue < 100)
             newErrors.startingBid = "Minimum starting bid is ₹100";
 
+        if (!formData.endDate)
+            newErrors.endDate = "Auction end date is required";
+        else {
+            const endDate = new Date(formData.endDate);
+            const now = new Date();
+            if (endDate <= now)
+                newErrors.endDate = "End date must be in the future";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    // Called by Stepper before advancing — return false to block the step change
     const handleBeforeNext = (step) => {
         let valid = true;
         if (step === 1) valid = validateStep1();
@@ -83,19 +136,34 @@ export default function SellItem() {
         return valid;
     };
 
-    const handleSubmit = () => {
-        const newItem = {
-            title: formData.title,
-            bid: Number(formData.startingBid),
-            img: formData.imagePreview,
-            description: formData.description,
-            category: formData.category,
-            condition: formData.condition,
-            id: Date.now(),
-            bids: []
-        };
-        addItem(newItem);
-        navigate('/dashboard');
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        setSubmitError('');
+
+        try {
+            const itemData = {
+                title: formData.title.trim(),
+                description: formData.description.trim(),
+                category: formData.category,
+                condition: formData.condition,
+                startingPrice: Number(formData.startingBid),
+                image: formData.imageBase64,
+                endTime: new Date(formData.endDate).toISOString(),
+            };
+
+            await addItem(itemData);
+            navigate('/dashboard');
+        } catch (err) {
+            setSubmitError(err.message || 'Failed to list item. Please try again.');
+            setSubmitting(false);
+        }
+    };
+
+    // Get minimum date for the date picker (tomorrow)
+    const getMinDate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().slice(0, 16);
     };
 
     return (
@@ -122,6 +190,12 @@ export default function SellItem() {
                         className="w-full max-w-4xl bg-[#111827]/80 backdrop-blur-md p-8 rounded-2xl border border-gray-800/50 shadow-2xl"
                     >
                         <h2 className="text-3xl font-bold mb-8 text-red-500 text-center">Sell Your Item</h2>
+
+                        {submitError && (
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-center">
+                                {submitError}
+                            </div>
+                        )}
 
                         <Stepper
                             initialStep={1}
@@ -263,6 +337,26 @@ export default function SellItem() {
                                             </p>
                                         )}
                                     </div>
+
+                                    <div>
+                                        <label className="block text-gray-400 mb-2">Auction End Date & Time *</label>
+                                        <input
+                                            type="datetime-local"
+                                            name="endDate"
+                                            value={formData.endDate}
+                                            onChange={handleChange}
+                                            min={getMinDate()}
+                                            className={`w-full bg-gray-900/50 border rounded-lg p-3 text-white focus:outline-none transition ${errors.endDate
+                                                ? 'border-red-500 focus:border-red-500'
+                                                : 'border-gray-700 focus:border-red-500'
+                                                }`}
+                                        />
+                                        {errors.endDate && (
+                                            <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+                                                <span>⚠</span> {errors.endDate}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </Step>
 
@@ -302,12 +396,27 @@ export default function SellItem() {
                                                 <p className="text-gray-300 text-sm mt-1">{formData.description}</p>
                                             </div>
 
-                                            <div className="border-t border-gray-700 pt-4">
-                                                <p className="text-gray-400 text-sm">Starting Bid</p>
-                                                <p className="text-red-500 font-bold text-2xl">₹{formData.startingBid}</p>
+                                            <div className="grid grid-cols-2 gap-4 border-t border-gray-700 pt-4">
+                                                <div>
+                                                    <p className="text-gray-400 text-sm">Starting Bid</p>
+                                                    <p className="text-red-500 font-bold text-2xl">₹{formData.startingBid}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-400 text-sm">Auction Ends</p>
+                                                    <p className="text-yellow-400 font-semibold">
+                                                        {formData.endDate ? new Date(formData.endDate).toLocaleString() : 'Not set'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {submitting && (
+                                        <div className="text-center">
+                                            <div className="inline-block w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="text-gray-400 text-sm mt-2">Listing your item...</p>
+                                        </div>
+                                    )}
 
                                     <p className="text-gray-400 text-sm text-center">Click "Submit" to list your item for auction</p>
                                 </div>
