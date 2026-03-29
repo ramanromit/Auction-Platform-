@@ -52,11 +52,11 @@ export default function Dashboard() {
   };
 
   const sidebarItems = [
-    { label: "🔥 Live Auctions", key: "live" },
-    { label: "📦 My Products", key: "myProducts" },
-    { label: "📊 My Bids", key: "bids" },
-    { label: "💰 Sell Item", path: "/sell" },
-    { label: "⚙ Settings", key: "settings" },
+    { label: "Live Auctions", key: "live" },
+    { label: "My Products", key: "myProducts" },
+    { label: "My Bids", key: "bids" },
+    { label: "Sell Item", path: "/sell" },
+    { label: "Settings", key: "settings" },
   ];
 
   // Loading skeleton
