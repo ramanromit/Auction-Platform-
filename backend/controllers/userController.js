@@ -94,7 +94,7 @@ const getUserProfile = async (req, res, next) => {
 // @access  Public
 const googleAuth = async (req, res, next) => {
   try {
-    const { token } = req.body;
+    const { token, isLogin } = req.body;
     
     if (!token) {
       res.status(400);
@@ -122,6 +122,12 @@ const googleAuth = async (req, res, next) => {
         token: generateToken(user._id),
       });
     } else {
+      if (isLogin) {
+        // the user does not exist, but they are trying to log in
+        res.status(404);
+        throw new Error("Account does not exist. Please sign up first.");
+      }
+
       // Create new user without a traditional password
       user = await User.create({
         name,

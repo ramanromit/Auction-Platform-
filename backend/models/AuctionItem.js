@@ -47,11 +47,17 @@ const auctionItemSchema = mongoose.Schema(
       enum: ['active', 'ended', 'sold'],
       default: 'active',
     },
+    highestBidder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     bids: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         amount: { type: Number, required: true },
         time: { type: Date, default: Date.now },
+        bidderName: { type: String },
       },
     ],
   },

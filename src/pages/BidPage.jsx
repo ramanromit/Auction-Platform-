@@ -3,18 +3,24 @@ import Navbar from "../components/navbar";
 import { useAuction } from "../context/AuctionContext";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { socket } from "../socket";
 
 export default function BidPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { fetchItemById, placeBid } = useAuction();
+  const { fetchItemById } = useAuction();
 
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
+  const [isEnded, setIsEnded] = useState(false);
+  const [winnerName, setWinnerName] = useState("");
+
+  const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+
 
   useEffect(() => {
     const loadItem = async () => {
@@ -22,23 +28,74 @@ export default function BidPage() {
       const data = await fetchItemById(id);
       if (data) {
         setItem(data);
-        // Calculate time remaining from endTime
-        const remaining = Math.floor((new Date(data.endTime) - new Date()) / 1000);
-        setTimeLeft(remaining > 0 ? remaining : 0);
+        if (data.status === 'ended') {
+           setIsEnded(true);
+           setTimeLeft(0);
+        } else {
+           const remaining = Math.floor((new Date(data.endTime) - new Date()) / 1000);
+           setTimeLeft(remaining > 0 ? remaining : 0);
+           if (remaining <= 0) setIsEnded(true);
+        }
       }
       setLoading(false);
     };
     loadItem();
   }, [id, fetchItemById]);
 
+  // Socket.IO sync
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (!item || !userInfo?.token || isEnded) return;
+
+    socket.emit("joinAuction", { auctionId: id });
+
+    socket.on("auctionState", (data) => {
+      setItem((prev) => prev ? { ...prev, currentPrice: data.currentPrice, bids: data.bids, status: data.status } : prev);
+      if (data.status === "ended") setIsEnded(true);
+    });
+
+    socket.on("bidUpdate", (data) => {
+      setItem((prev) => prev ? { ...prev, currentPrice: data.currentPrice, bids: data.bids } : prev);
+      if (data.highestBidder === userInfo._id) {
+        setSuccessMessage("🎉 You are the highest bidder!");
+      } else {
+        setSuccessMessage("");
+      }
+    });
+
+    socket.on("bidError", (msg) => {
+      setError(msg);
+    });
+
+    socket.on("auctionEnded", (data) => {
+      setIsEnded(true);
+      setTimeLeft(0);
+      setWinnerName(data.winner || "Unknown");
+      setItem((prev) => prev ? { ...prev, status: "ended", currentPrice: data.finalPrice } : prev);
+    });
+
+    return () => {
+      socket.emit("leaveAuction", { auctionId: id });
+      socket.off("auctionState");
+      socket.off("bidUpdate");
+      socket.off("bidError");
+      socket.off("auctionEnded");
+    };
+  }, [id, item ? item._id : null, userInfo?.token, isEnded, userInfo?._id]);
+
+  useEffect(() => {
+    if (timeLeft <= 0 || isEnded) return;
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setIsEnded(true);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, isEnded]);
 
   if (loading) {
     return (
@@ -79,33 +136,40 @@ export default function BidPage() {
   const handleBid = (e) => {
     e.preventDefault();
 
-    if (timeLeft <= 0) {
+    if (isEnded || timeLeft <= 0) {
       setError("Auction has ended.");
+      return;
+    }
+    
+    if (!userInfo || !userInfo.token) {
+      setError("Please login to place a bid.");
       return;
     }
 
     if (Number(bidAmount) < minimumBid) {
       setError(`Minimum bid must be ₹${minimumBid.toLocaleString()}`);
-      setSuccess(false);
+      setSuccessMessage("");
       return;
     }
 
-    placeBid(item._id, Number(bidAmount));
-    setItem((prev) => ({
-      ...prev,
-      currentPrice: Number(bidAmount),
-      bids: [
-        ...prev.bids,
-        { amount: Number(bidAmount), time: new Date().toLocaleTimeString() },
-      ],
-    }));
+    if (item.user && item.user._id === userInfo._id) {
+      setError("You cannot bid on your own item.");
+      return;
+    }
+
+    // Emit bid to server
+    socket.emit("placeBid", {
+      auctionId: item._id,
+      amount: Number(bidAmount),
+      token: userInfo.token,
+    });
+    
     setError("");
-    setSuccess(true);
     setBidAmount("");
   };
 
   const formatTime = () => {
-    if (timeLeft <= 0) return "Ended";
+    if (isEnded || timeLeft <= 0) return "Ended";
     const days = Math.floor(timeLeft / (60 * 60 * 24));
     const hours = Math.floor((timeLeft / (60 * 60)) % 24);
     const min = Math.floor((timeLeft / 60) % 60);
@@ -165,9 +229,12 @@ export default function BidPage() {
               {/* TIMER */}
               <div className="mb-6">
                 <p className="text-sm text-gray-400">Auction Ends In</p>
-                <p className={`text-xl font-semibold ${timeLeft <= 0 ? 'text-red-400' : 'text-yellow-400'}`}>
+                <p className={`text-xl font-semibold ${(isEnded || timeLeft <= 0) ? 'text-red-400' : 'text-yellow-400'}`}>
                   {formatTime()}
                 </p>
+                {isEnded && winnerName && (
+                  <p className="text-green-500 mt-2 font-medium">Winner: {winnerName} (₹{currentBid.toLocaleString()})</p>
+                )}
               </div>
 
               {/* BID FORM */}
@@ -214,18 +281,18 @@ export default function BidPage() {
                   <p className="text-red-500 text-sm">{error}</p>
                 )}
 
-                {success && (
+                {successMessage && (
                   <p className="text-green-500 text-sm">
-                    🎉 You are the highest bidder!
+                    {successMessage}
                   </p>
                 )}
 
                 <button
                   type="submit"
-                  disabled={timeLeft <= 0}
+                  disabled={isEnded || timeLeft <= 0}
                   className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition disabled:bg-gray-600"
                 >
-                  {timeLeft <= 0 ? "Auction Ended" : "Place Bid"}
+                  {(isEnded || timeLeft <= 0) ? "Auction Ended" : "Place Bid"}
                 </button>
               </form>
 
@@ -242,7 +309,10 @@ export default function BidPage() {
                           key={index}
                           className="flex justify-between text-sm bg-white/5 p-2 rounded"
                         >
-                          <span>₹{bid.amount?.toLocaleString()}</span>
+                          <span>
+                            {bid.bidderName ? <span className="text-gray-400 mr-2">{bid.bidderName}</span> : null}
+                            ₹{bid.amount?.toLocaleString()}
+                          </span>
                           <span className="text-gray-400">
                             {bid.time
                               ? typeof bid.time === "string"

@@ -4,10 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import DarkVeil from "../components/DarkVeil";
 import { useAuction } from "../context/AuctionContext";
+import { socket } from "../socket";
 
 export default function Dashboard() {
   const { items, myItems, itemsLoading, myItemsLoading, error, fetchItems, fetchMyItems } = useAuction();
   const [activeSection, setActiveSection] = useState("live");
+  const [localItems, setLocalItems] = useState([]);
+  const [localMyItems, setLocalMyItems] = useState([]);
   const navigate = useNavigate();
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
@@ -17,7 +20,40 @@ export default function Dashboard() {
     if (userInfo) {
       fetchMyItems();
     }
-  }, [fetchItems, fetchMyItems]);
+  }, [fetchItems, fetchMyItems, userInfo?._id]);
+
+  useEffect(() => {
+    setLocalItems(items);
+  }, [items]);
+
+  useEffect(() => {
+    setLocalMyItems(myItems);
+  }, [myItems]);
+
+  useEffect(() => {
+    socket.on("globalBidUpdate", ({ auctionId, currentPrice }) => {
+      setLocalItems((prev) =>
+        prev.map((item) => (item._id === auctionId ? { ...item, currentPrice } : item))
+      );
+      setLocalMyItems((prev) =>
+        prev.map((item) => (item._id === auctionId ? { ...item, currentPrice } : item))
+      );
+    });
+
+    socket.on("globalAuctionEnded", ({ auctionId }) => {
+      setLocalItems((prev) =>
+        prev.map((item) => (item._id === auctionId ? { ...item, status: "ended" } : item))
+      );
+      setLocalMyItems((prev) =>
+        prev.map((item) => (item._id === auctionId ? { ...item, status: "ended" } : item))
+      );
+    });
+
+    return () => {
+      socket.off("globalBidUpdate");
+      socket.off("globalAuctionEnded");
+    };
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -34,12 +70,10 @@ export default function Dashboard() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Filter out the current user's own items from Live Auctions (client-side)
   const liveItems = userInfo
-    ? items.filter((item) => item.user?._id?.toString() !== userInfo._id?.toString())
-    : items;
+    ? localItems.filter((item) => item.status === 'active' && item.user?._id?.toString() !== userInfo._id?.toString())
+    : localItems.filter((item) => item.status === 'active');
 
-  // Time remaining helper
   const getTimeRemaining = (endTime) => {
     const total = new Date(endTime) - new Date();
     if (total <= 0) return "Ended";
@@ -59,7 +93,6 @@ export default function Dashboard() {
     { label: "Settings", key: "settings" },
   ];
 
-  // Loading skeleton
   const SkeletonCard = () => (
     <div className="bg-[#1f2937]/70 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-gray-700/50 animate-pulse">
       <div className="w-full h-48 bg-gray-700/50"></div>
@@ -158,7 +191,7 @@ export default function Dashboard() {
                   },
                   {
                     title: "Listed Items",
-                    value: myItems.length,
+                    value: localMyItems.length,
                     color: "text-yellow-500",
                   },
                 ].map((stat, index) => (
@@ -217,8 +250,12 @@ export default function Dashboard() {
                           />
                           <div className="p-5">
                             <div className="flex justify-between items-start mb-2">
-                              <h3 className="text-lg font-semibold">
+                              <h3 className="text-lg font-semibold flex items-center gap-2">
                                 {item.title}
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                </span>
                               </h3>
                               <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
                                 {item.category}
@@ -302,7 +339,7 @@ export default function Dashboard() {
                       initial="hidden"
                       animate="visible"
                     >
-                      {myItems.map((item) => (
+                      {localMyItems.map((item) => (
                         <motion.div
                           key={item._id}
                           variants={itemVariants}

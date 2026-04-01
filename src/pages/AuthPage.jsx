@@ -171,15 +171,24 @@ export default function AuthPage() {
       const config = { headers: { 'Content-type': 'application/json' } };
       const { data } = await axios.post(
         'http://localhost:5000/api/users/google',
-        { token: credentialResponse.credential },
+        { token: credentialResponse.credential, isLogin },
         config
       );
       localStorage.setItem("userInfo", JSON.stringify(data));
       setErrors({});
-      setSuccess("Google Login successful! Redirecting...");
+      setSuccess(isLogin ? "Google Login successful! Redirecting..." : "Google Registration successful! Redirecting...");
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (error) {
-      setErrors({ general: error.response?.data?.message || 'Google authentication failed' });
+      const errorMessage = error.response?.data?.message || 'Google authentication failed';
+      setErrors({ general: errorMessage });
+      
+      // Auto-switch to register mode if trying to login without an account
+      if (errorMessage.includes("Account does not exist") && isLogin) {
+         setTimeout(() => {
+           setErrors({});
+           navigate("/auth?mode=register");
+         }, 2500);
+      }
     } finally {
       setLoading(false);
     }

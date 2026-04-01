@@ -102,21 +102,6 @@ export const AuctionProvider = ({ children }) => {
         setError(null);
     }, []);
 
-    // Local-only placeBid (no backend for now)
-    const placeBid = (itemId, bidAmount) => {
-        setItems((prevItems) =>
-            prevItems.map((item) =>
-                item._id === itemId
-                    ? {
-                        ...item,
-                        currentPrice: bidAmount,
-                        bids: [...item.bids, { amount: bidAmount, time: new Date().toLocaleTimeString() }]
-                    }
-                    : item
-            )
-        );
-    };
-
     return (
         <AuctionContext.Provider value={{
             items,
@@ -128,7 +113,6 @@ export const AuctionProvider = ({ children }) => {
             fetchMyItems,
             fetchItemById,
             addItem,
-            placeBid,
             resetState,
         }}>
             {children}
