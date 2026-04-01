@@ -110,7 +110,7 @@ export default function AuthPage() {
           headers: { 'Content-type': 'application/json' },
         };
         const { data } = await axios.post(
-          'http://localhost:5000/api/users/login',
+          `http://${window.location.hostname}:5000/api/users/login`,
           { email: formData.email.trim(), password: formData.password },
           config
         );
@@ -130,7 +130,7 @@ export default function AuthPage() {
           headers: { 'Content-type': 'application/json' },
         };
         const { data } = await axios.post(
-          'http://localhost:5000/api/users',
+          `http://${window.location.hostname}:5000/api/users`,
           { name: formData.name.trim(), email: formData.email.trim(), password: formData.password },
           config
         );
@@ -170,7 +170,7 @@ export default function AuthPage() {
       setLoading(true);
       const config = { headers: { 'Content-type': 'application/json' } };
       const { data } = await axios.post(
-        'http://localhost:5000/api/users/google',
+        `http://${window.location.hostname}:5000/api/users/google`,
         { token: credentialResponse.credential, isLogin },
         config
       );

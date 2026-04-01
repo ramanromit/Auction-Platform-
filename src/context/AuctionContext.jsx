@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/auctions';
+const API_URL = `http://${window.location.hostname}:5000/api/auctions`;
 const AuctionContext = createContext();
 
 export const useAuction = () => {
