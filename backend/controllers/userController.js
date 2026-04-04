@@ -29,6 +29,7 @@ const registerUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        walletBalance: user.walletBalance,
         token: generateToken(user._id),
       });
     } else {
@@ -55,6 +56,7 @@ const authUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        walletBalance: user.walletBalance,
         token: generateToken(user._id),
       });
     } else {
@@ -79,6 +81,36 @@ const getUserProfile = async (req, res, next) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        walletBalance: user.walletBalance,
+      });
+    } else {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        walletBalance: updatedUser.walletBalance,
+        token: generateToken(updatedUser._id),
       });
     } else {
       res.status(404);
@@ -119,6 +151,7 @@ const googleAuth = async (req, res, next) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        walletBalance: user.walletBalance,
         token: generateToken(user._id),
       });
     } else {
@@ -140,6 +173,7 @@ const googleAuth = async (req, res, next) => {
           name: user.name,
           email: user.email,
           isAdmin: user.isAdmin,
+          walletBalance: user.walletBalance,
           token: generateToken(user._id),
         });
       } else {
@@ -157,5 +191,6 @@ module.exports = {
   registerUser,
   authUser,
   getUserProfile,
+  updateUserProfile,
   googleAuth,
 };

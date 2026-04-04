@@ -21,6 +21,11 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    walletBalance: {
+      type: Number,
+      required: true,
+      default: 20000,
+    },
   },
   {
     timestamps: true,

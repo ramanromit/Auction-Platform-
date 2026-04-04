@@ -6,6 +6,7 @@ import BidPage from "./pages/BidPage";
 import Dashboard from "./pages/dashboard";
 import SellItem from "./pages/SellItem";
 import AuthPage from "./pages/AuthPage";
+import SettingsPage from "./pages/SettingsPage";
 import { AuctionProvider } from "./context/AuctionContext";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./index.css";
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/bid/:id" element={<BidPage />} />
             <Route path="/sell" element={<SellItem />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </AuctionProvider>
       </Router>

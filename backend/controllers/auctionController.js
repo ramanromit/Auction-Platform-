@@ -1,4 +1,5 @@
 const AuctionItem = require('../models/AuctionItem');
+const User = require('../models/User');
 
 // @desc    Create new auction item
 // @route   POST /api/auctions
@@ -84,9 +85,44 @@ const getAuctionItemById = async (req, res, next) => {
   }
 };
 
+// @desc    Delete an auction item
+// @route   DELETE /api/auctions/:id
+// @access  Private
+const deleteAuctionItem = async (req, res, next) => {
+  try {
+    const item = await AuctionItem.findById(req.params.id);
+
+    if (!item) {
+      res.status(404);
+      throw new Error('Auction item not found');
+    }
+
+    if (item.user.toString() !== req.user._id.toString()) {
+      res.status(401);
+      throw new Error('Not authorized to delete this item');
+    }
+
+    // Refund highest bidder if auction is active
+    if (item.status === 'active' && item.highestBidder) {
+      const prevBidder = await User.findById(item.highestBidder);
+      if (prevBidder) {
+        prevBidder.walletBalance += item.currentPrice;
+        await prevBidder.save();
+      }
+    }
+
+    await item.deleteOne();
+
+    res.json({ message: 'Auction item removed' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createAuctionItem,
   getAuctionItems,
   getMyAuctionItems,
   getAuctionItemById,
+  deleteAuctionItem,
 };

@@ -74,6 +74,12 @@ export default function Dashboard() {
     ? localItems.filter((item) => item.status === 'active' && item.user?._id?.toString() !== userInfo._id?.toString())
     : localItems.filter((item) => item.status === 'active');
 
+  const myBidsItems = userInfo
+    ? localItems.filter((item) => 
+        item.bids && item.bids.some((bid) => bid.user?.toString() === userInfo._id?.toString())
+      )
+    : [];
+
   const getTimeRemaining = (endTime) => {
     const total = new Date(endTime) - new Date();
     if (total <= 0) return "Ended";
@@ -86,11 +92,52 @@ export default function Dashboard() {
   };
 
   const sidebarItems = [
-    { label: "Live Auctions", key: "live" },
-    { label: "My Products", key: "myProducts" },
-    { label: "My Bids", key: "bids" },
-    { label: "Sell Item", path: "/sell" },
-    { label: "Settings", key: "settings" },
+    { 
+      label: "Live Auctions", 
+      key: "live", 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      )
+    },
+    { 
+      label: "My Products", 
+      key: "myProducts",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      )
+    },
+    { 
+      label: "My Bids", 
+      key: "bids",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      )
+    },
+    { 
+      label: "Sell Item", 
+      path: "/sell",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    },
+    { 
+      label: "Settings", 
+      path: "/settings",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      )
+    },
   ];
 
   const SkeletonCard = () => (
@@ -137,28 +184,35 @@ export default function Dashboard() {
               Dashboard
             </h2>
 
-            <ul className="space-y-4 text-gray-300">
-              {sidebarItems.map((item, index) =>
-                item.path ? (
-                  <Link to={item.path} key={index}>
-                    <li className="hover:text-white hover:bg-white/10 p-2 rounded-md cursor-pointer transition mb-2 block">
-                      {item.label}
+            <ul className="space-y-2 text-gray-300">
+              {sidebarItems.map((item, index) => {
+                const isActive = activeSection === item.key;
+                const baseStyles = `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer group`;
+                const activeStyles = `text-white bg-red-600/10 border-l-4 border-red-500 shadow-[inset_4px_0_0_0_#ef4444]`;
+                const inactiveStyles = `hover:text-white hover:bg-white/5`;
+
+                return item.path ? (
+                  <Link to={item.path} key={index} className="block">
+                    <li className={`${baseStyles} ${inactiveStyles}`}>
+                      <span className="text-gray-400 group-hover:text-red-400 transition-colors">
+                        {item.icon}
+                      </span>
+                      <span className="font-medium">{item.label}</span>
                     </li>
                   </Link>
                 ) : (
                   <li
                     key={index}
                     onClick={() => setActiveSection(item.key)}
-                    className={`hover:text-white hover:bg-white/10 p-2 rounded-md cursor-pointer transition mb-2 ${
-                      activeSection === item.key
-                        ? "text-white bg-white/10 border-l-2 border-red-500"
-                        : ""
-                    }`}
+                    className={`${baseStyles} ${isActive ? activeStyles : inactiveStyles}`}
                   >
-                    {item.label}
+                    <span className={`${isActive ? 'text-red-500' : 'text-gray-400 group-hover:text-red-400'} transition-colors`}>
+                      {item.icon}
+                    </span>
+                    <span className={`font-medium ${isActive ? 'text-white' : ''}`}>{item.label}</span>
                   </li>
-                )
-              )}
+                );
+              })}
             </ul>
           </motion.div>
 
@@ -177,7 +231,7 @@ export default function Dashboard() {
               )}
 
               {/* Stats Section */}
-              <div className="grid grid-cols-3 gap-6 mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {[
                   {
                     title: "Active Bids",
@@ -194,17 +248,44 @@ export default function Dashboard() {
                     value: localMyItems.length,
                     color: "text-yellow-500",
                   },
+                  {
+                    title: "Account",
+                    value: "Settings",
+                    color: "text-blue-400",
+                    isLink: true,
+                    path: "/settings"
+                  },
                 ].map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    variants={itemVariants}
-                    className="bg-[#1f2937]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700/50 hover:border-red-500/30 transition duration-300"
-                  >
-                    <h3 className="text-gray-400 mb-2">{stat.title}</h3>
-                    <p className={`text-3xl font-bold ${stat.color}`}>
-                      {stat.value}
-                    </p>
-                  </motion.div>
+                  stat.isLink ? (
+                    <Link key={index} to={stat.path}>
+                      <motion.div
+                        variants={itemVariants}
+                        className="bg-[#1f2937]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700/50 hover:border-red-500/30 transition duration-300 h-full cursor-pointer group"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-gray-400">{stat.title}</h3>
+                          <svg className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <p className={`text-2xl font-bold ${stat.color}`}>
+                          {stat.value}
+                        </p>
+                      </motion.div>
+                    </Link>
+                  ) : (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      className="bg-[#1f2937]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700/50 hover:border-red-500/30 transition duration-300"
+                    >
+                      <h3 className="text-gray-400 mb-2">{stat.title}</h3>
+                      <p className={`text-3xl font-bold ${stat.color}`}>
+                        {stat.value}
+                      </p>
+                    </motion.div>
+                  )
                 ))}
               </div>
 
@@ -389,19 +470,110 @@ export default function Dashboard() {
                 </>
               )}
 
-              {/* ===== PLACEHOLDER SECTIONS ===== */}
+              {/* ===== MY BIDS SECTION ===== */}
               {activeSection === "bids" && (
-                <div className="text-center py-16">
-                  <h2 className="text-2xl font-semibold mb-4">📊 My Bids</h2>
-                  <p className="text-gray-400">Coming soon...</p>
-                </div>
-              )}
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-semibold">📊 My Active Bids</h2>
+                  </div>
 
-              {activeSection === "settings" && (
-                <div className="text-center py-16">
-                  <h2 className="text-2xl font-semibold mb-4">⚙ Settings</h2>
-                  <p className="text-gray-400">Coming soon...</p>
-                </div>
+                  {!userInfo ? (
+                    <div className="text-center py-16">
+                      <p className="text-gray-400 text-lg">
+                        Login to track your bids
+                      </p>
+                      <button
+                        onClick={() => navigate("/auth")}
+                        className="mt-4 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg transition"
+                      >
+                        Login
+                      </button>
+                    </div>
+                  ) : myBidsItems.length === 0 ? (
+                    <div className="text-center py-16">
+                      <p className="text-gray-400 text-lg">
+                        You haven't placed any bids on active auctions yet.
+                      </p>
+                      <button
+                        onClick={() => setActiveSection("live")}
+                        className="mt-4 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg transition"
+                      >
+                        Browse Live Auctions
+                      </button>
+                    </div>
+                  ) : (
+                    <motion.div
+                      className="grid grid-cols-3 gap-8"
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {myBidsItems.map((item) => {
+                        const myMaxBid = Math.max(
+                           ...item.bids.filter(b => b.user?.toString() === userInfo._id?.toString()).map(b => b.amount)
+                        );
+                        return (
+                          <motion.div
+                            key={item._id}
+                            variants={itemVariants}
+                            className="bg-[#1f2937]/70 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-gray-700/50 hover:border-blue-500/30 transition duration-300"
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-full h-48 object-contain bg-[#111827]/50 p-4"
+                            />
+                            <div className="p-5">
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="text-lg font-semibold truncate w-3/4">
+                                  {item.title}
+                                </h3>
+                                
+                                {item.highestBidder?.toString() === userInfo._id?.toString() ? (
+                                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full whitespace-nowrap">
+                                    Winning!
+                                  </span>
+                                ) : (
+                                  <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full whitespace-nowrap">
+                                    Outbid
+                                  </span>
+                                )}
+
+                              </div>
+                              
+                              <p className="text-gray-400 mb-1 flex justify-between">
+                                <span>Current Price:</span>
+                                <span className="text-white font-semibold">
+                                  ₹{item.currentPrice?.toLocaleString()}
+                                </span>
+                              </p>
+                              
+                              <p className="text-gray-400 mb-3 flex justify-between">
+                                <span>Your Top Bid:</span>
+                                <span className="text-blue-400 font-semibold">
+                                  ₹{myMaxBid.toLocaleString()}
+                                </span>
+                              </p>
+
+                              <p className="text-xs text-yellow-400 mb-4 text-center bg-yellow-500/10 py-1.5 rounded">
+                                ⏰ {getTimeRemaining(item.endTime)}
+                              </p>
+                              
+                              <Link
+                                to={`/bid/${item._id}`}
+                                className="block w-full"
+                              >
+                                <button className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-md transition font-medium shadow-lg shadow-blue-600/20">
+                                  {item.highestBidder?.toString() === userInfo._id?.toString() ? "View Auction" : "Bid Again"}
+                                </button>
+                              </Link>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </>
               )}
             </motion.div>
           </div>

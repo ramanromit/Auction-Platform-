@@ -71,9 +71,28 @@ const socketHandlers = (io) => {
           return socket.emit('bidError', `Minimum bid must be ₹${(currentBid + 1000).toLocaleString()}`);
         }
 
+        if (user.walletBalance < amount) {
+          return socket.emit('bidError', 'Insufficient wallet balance to place this bid.');
+        }
+
         if (auction.user.toString() === user._id.toString()) {
            return socket.emit('bidError', 'You cannot bid on your own item');
         }
+
+        // Refund previous highest bidder
+        if (auction.highestBidder) {
+          const prevBidder = await User.findById(auction.highestBidder);
+          if (prevBidder) {
+            prevBidder.walletBalance += auction.currentPrice;
+            await prevBidder.save();
+            io.emit('walletUpdate', { userId: prevBidder._id, balance: prevBidder.walletBalance });
+          }
+        }
+
+        // Deduct from new bidder
+        user.walletBalance -= amount;
+        await user.save();
+        socket.emit('walletUpdate', { userId: user._id, balance: user.walletBalance });
 
         auction.currentPrice = amount;
         auction.highestBidder = user._id;
@@ -119,11 +138,25 @@ const socketHandlers = (io) => {
 
 async function endAuction(auctionId, io) {
   try {
-    const auction = await AuctionItem.findById(auctionId).populate('highestBidder', 'name');
+    const auction = await AuctionItem.findById(auctionId)
+      .populate('highestBidder', 'name')
+      .populate('user'); // populate seller to edit their wallet
+
     if (auction && auction.status === 'active') {
       auction.status = 'ended';
       await auction.save();
-      
+
+      // Credit the seller's wallet if there was a winning bidder
+      if (auction.highestBidder && auction.user) {
+        const seller = await User.findById(auction.user._id);
+        if (seller) {
+          seller.walletBalance += auction.currentPrice;
+          await seller.save();
+          // Notify the seller immediately if they are online
+          io.emit('walletUpdate', { userId: seller._id, balance: seller.walletBalance });
+        }
+      }
+
       io.to(auctionId).emit('auctionEnded', {
         winner: auction.highestBidder ? auction.highestBidder.name : null,
         finalPrice: auction.currentPrice

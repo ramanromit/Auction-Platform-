@@ -95,6 +95,23 @@ export const AuctionProvider = ({ children }) => {
         }
     }, []);
 
+    // Delete an auction item
+    const deleteItem = useCallback(async (id) => {
+        try {
+            setError(null);
+            const config = getAuthConfig();
+            await axios.delete(`${API_URL}/${id}`, config);
+            
+            setMyItems((prev) => prev.filter(item => item._id !== id));
+            setItems((prev) => prev.filter(item => item._id !== id));
+            return true;
+        } catch (err) {
+            const message = err.response?.data?.message || 'Failed to delete auction item';
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
+
     // Reset all state (call on logout)
     const resetState = useCallback(() => {
         setItems([]);
@@ -113,6 +130,7 @@ export const AuctionProvider = ({ children }) => {
             fetchMyItems,
             fetchItemById,
             addItem,
+            deleteItem,
             resetState,
         }}>
             {children}

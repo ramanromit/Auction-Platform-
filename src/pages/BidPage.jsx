@@ -152,6 +152,12 @@ export default function BidPage() {
       return;
     }
 
+    if (userInfo.walletBalance !== undefined && Number(bidAmount) > userInfo.walletBalance) {
+      setError(`Insufficient wallet balance. You only have ₹${userInfo.walletBalance.toLocaleString()}`);
+      setSuccessMessage("");
+      return;
+    }
+
     if (item.user && item.user._id === userInfo._id) {
       setError("You cannot bid on your own item.");
       return;
