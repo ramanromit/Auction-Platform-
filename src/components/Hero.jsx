@@ -5,7 +5,7 @@ import TextType from "./TextType";
 
 export default function Hero() {
   return (
-    <section className="min-h-screen flex items-center px-20 relative overflow-hidden">
+    <section className="min-h-screen flex items-center px-10 relative overflow-hidden">
 
       <div className="flex w-full items-center justify-between relative z-10">
 

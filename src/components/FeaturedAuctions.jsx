@@ -30,9 +30,9 @@ export default function FeaturedAuctions() {
   };
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-20 relative overflow-hidden">
-      <div className="relative z-10 w-full max-w-6xl">
-        <h2 className="text-4xl font-bold mb-20 text-white text-center">
+    <section className="min-h-screen flex flex-col justify-center px-10 relative overflow-hidden">
+      <div className="relative z-10 w-full">
+        <h2 className="text-4xl font-bold mb-20 text-white text-left">
           <DecryptedText
             text="Featured Auctions"
             speed={50}
@@ -51,7 +51,7 @@ export default function FeaturedAuctions() {
             No featured auctions available right now.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 place-items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             {featuredItems.map((item) => (
               <div
                 key={item._id}

@@ -27,13 +27,13 @@
 /* FRONT FACE */
 .cube-front {
   background-color: #1F2937;
-  transform: rotateX(0deg) translateZ(100px);
+  transform: rotateX(0deg) translateZ(88px);
 }
 
 /* BOTTOM FACE */
 .cube-bottom {
   background-color: #DC2626;
-  transform: rotateX(90deg) translateZ(100px);
+  transform: rotateX(90deg) translateZ(88px);
 }
 .carousel-container {
   position: relative;

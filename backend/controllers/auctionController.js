@@ -37,12 +37,19 @@ const createAuctionItem = async (req, res, next) => {
   }
 };
 
-// @desc    Get all active auction items
+// @desc    Get all active auction items (+ recently ended within 24h)
 // @route   GET /api/auctions
 // @access  Public
 const getAuctionItems = async (req, res, next) => {
   try {
-    const items = await AuctionItem.find({ status: 'active' })
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const items = await AuctionItem.find({
+      $or: [
+        { status: 'active' },
+        { status: 'ended', endTime: { $gte: oneDayAgo } },
+      ],
+    })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
 

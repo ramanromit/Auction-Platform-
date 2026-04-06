@@ -11,7 +11,10 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("live");
   const [localItems, setLocalItems] = useState([]);
   const [localMyItems, setLocalMyItems] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const navigate = useNavigate();
+
+  const categories = ["All", "Electronics", "Collectibles", "Fashion", "Home & Garden", "Sports", "Other"];
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
@@ -70,15 +73,44 @@ export default function Dashboard() {
     visible: { opacity: 1, y: 0 },
   };
 
-  const liveItems = userInfo
-    ? localItems.filter((item) => item.status === 'active' && item.user?._id?.toString() !== userInfo._id?.toString())
-    : localItems.filter((item) => item.status === 'active');
+  const liveItemsUnfiltered = userInfo
+    ? localItems.filter((item) => {
+        const isOwn = item.user?._id?.toString() === userInfo._id?.toString();
+        if (isOwn) return false;
+        if (item.status === 'active') return true;
+        // Show ended items for 24 hours
+        if (item.status === 'ended') {
+          const endedAgo = Date.now() - new Date(item.endTime).getTime();
+          return endedAgo < 24 * 60 * 60 * 1000;
+        }
+        return false;
+      })
+    : localItems.filter((item) => {
+        if (item.status === 'active') return true;
+        if (item.status === 'ended') {
+          const endedAgo = Date.now() - new Date(item.endTime).getTime();
+          return endedAgo < 24 * 60 * 60 * 1000;
+        }
+        return false;
+      });
 
-  const myBidsItems = userInfo
+  const liveItems = selectedCategory === "All"
+    ? liveItemsUnfiltered
+    : liveItemsUnfiltered.filter((item) => item.category === selectedCategory);
+
+  const myBidsItemsUnfiltered = userInfo
     ? localItems.filter((item) => 
         item.bids && item.bids.some((bid) => bid.user?.toString() === userInfo._id?.toString())
       )
     : [];
+
+  const myBidsItems = selectedCategory === "All"
+    ? myBidsItemsUnfiltered
+    : myBidsItemsUnfiltered.filter((item) => item.category === selectedCategory);
+
+  const filteredMyItems = selectedCategory === "All"
+    ? localMyItems
+    : localMyItems.filter((item) => item.category === selectedCategory);
 
   const getTimeRemaining = (endTime) => {
     const total = new Date(endTime) - new Date();
@@ -218,6 +250,23 @@ export default function Dashboard() {
 
           {/* Main Content */}
           <div className="flex-1 p-10 ml-64">
+            {/* Category Filter Strip */}
+            <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 border ${
+                    selectedCategory === cat
+                      ? "bg-red-600 text-white border-red-600 shadow-lg shadow-red-600/20"
+                      : "bg-transparent text-gray-400 border-gray-700 hover:text-white hover:border-gray-500"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -231,11 +280,11 @@ export default function Dashboard() {
               )}
 
               {/* Stats Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                 {[
                   {
                     title: "Active Bids",
-                    value: liveItems.length,
+                    value: liveItemsUnfiltered.length,
                     color: "text-red-500",
                   },
                   {
@@ -248,44 +297,17 @@ export default function Dashboard() {
                     value: localMyItems.length,
                     color: "text-yellow-500",
                   },
-                  {
-                    title: "Account",
-                    value: "Settings",
-                    color: "text-blue-400",
-                    isLink: true,
-                    path: "/settings"
-                  },
                 ].map((stat, index) => (
-                  stat.isLink ? (
-                    <Link key={index} to={stat.path}>
-                      <motion.div
-                        variants={itemVariants}
-                        className="bg-[#1f2937]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700/50 hover:border-red-500/30 transition duration-300 h-full cursor-pointer group"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-gray-400">{stat.title}</h3>
-                          <svg className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        </div>
-                        <p className={`text-2xl font-bold ${stat.color}`}>
-                          {stat.value}
-                        </p>
-                      </motion.div>
-                    </Link>
-                  ) : (
-                    <motion.div
-                      key={index}
-                      variants={itemVariants}
-                      className="bg-[#1f2937]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700/50 hover:border-red-500/30 transition duration-300"
-                    >
-                      <h3 className="text-gray-400 mb-2">{stat.title}</h3>
-                      <p className={`text-3xl font-bold ${stat.color}`}>
-                        {stat.value}
-                      </p>
-                    </motion.div>
-                  )
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    className="bg-[#1f2937]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700/50 hover:border-red-500/30 transition duration-300"
+                  >
+                    <h3 className="text-gray-400 mb-2">{stat.title}</h3>
+                    <p className={`text-3xl font-bold ${stat.color}`}>
+                      {stat.value}
+                    </p>
+                  </motion.div>
                 ))}
               </div>
 
@@ -293,7 +315,7 @@ export default function Dashboard() {
               {activeSection === "live" && (
                 <>
                   <h2 className="text-2xl font-semibold mb-6">
-                    🔥 Live Auctions
+                     Live Auctions
                   </h2>
 
                   {itemsLoading ? (
@@ -313,44 +335,73 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <motion.div
+                      key={`live-grid-${selectedCategory}`}
                       className="grid grid-cols-3 gap-8"
                       variants={containerVariants}
                       initial="hidden"
                       animate="visible"
                     >
-                      {liveItems.map((item) => (
+                      {liveItems.map((item) => {
+                        const isEnded = item.status === 'ended' || new Date(item.endTime) <= new Date();
+                        return (
                         <motion.div
                           key={item._id}
                           variants={itemVariants}
-                          className="bg-[#1f2937]/70 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:scale-105 hover:shadow-red-900/20 transition duration-300 border border-gray-700/50"
+                          className={`bg-[#1f2937]/70 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg transition duration-300 border ${
+                            isEnded
+                              ? 'border-gray-700/50 opacity-60'
+                              : 'border-gray-700/50 hover:scale-105 hover:shadow-red-900/20'
+                          }`}
                         >
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="w-full h-48 object-contain bg-[#111827]/50 p-4"
-                          />
+                          <div className="relative">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className={`w-full h-48 object-contain bg-[#111827]/50 p-4 ${isEnded ? 'grayscale' : ''}`}
+                            />
+                            {isEnded && (
+                              <div className="absolute top-3 right-3 bg-gray-900/80 text-gray-300 text-xs font-semibold px-3 py-1 rounded-full border border-gray-600">
+                                Auction Ended
+                              </div>
+                            )}
+                          </div>
                           <div className="p-5">
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="text-lg font-semibold flex items-center gap-2">
                                 {item.title}
-                                <span className="relative flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                </span>
+                                {!isEnded && (
+                                  <span className="relative flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                  </span>
+                                )}
                               </h3>
                               <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
                                 {item.category}
                               </span>
                             </div>
                             <p className="text-gray-400 mb-1">
-                              Current Bid:{" "}
+                              {isEnded ? 'Final Price: ' : 'Current Bid: '}
                               <span className="text-white font-semibold">
                                 ₹{item.currentPrice?.toLocaleString()}
                               </span>
                             </p>
-                            <p className="text-xs text-yellow-400 mb-4">
-                              ⏰ {getTimeRemaining(item.endTime)}
-                            </p>
+                            <p className={`text-xs mb-4 flex items-center gap-1 ${isEnded ? 'text-red-400' : 'text-yellow-400'}`}>
+                                <svg
+                                  className="w-4 h-4 shrink-0"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="-1 -1 26 26"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 8v4l3 3m9-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                {getTimeRemaining(item.endTime)}
+                              </p>
                             {item.user && (
                               <p className="text-xs text-gray-500 mb-3">
                                 by {item.user.name}
@@ -360,13 +411,18 @@ export default function Dashboard() {
                               to={`/bid/${item._id}`}
                               className="block w-full"
                             >
-                              <button className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-md transition font-medium shadow-lg shadow-red-600/20">
-                                Place Bid
+                              <button className={`w-full py-2 rounded-md transition font-medium shadow-lg ${
+                                isEnded
+                                  ? 'bg-gray-600 hover:bg-gray-500 shadow-gray-600/10 text-gray-300'
+                                  : 'bg-red-600 hover:bg-red-700 shadow-red-600/20 text-white'
+                              }`}>
+                                {isEnded ? 'View Results' : 'Place Bid'}
                               </button>
                             </Link>
                           </div>
                         </motion.div>
-                      ))}
+                        );
+                      })}
                     </motion.div>
                   )}
                 </>
@@ -376,7 +432,7 @@ export default function Dashboard() {
               {activeSection === "myProducts" && (
                 <>
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-semibold">📦 My Products</h2>
+                    <h2 className="text-2xl font-semibold">My Products</h2>
                     <Link to="/sell">
                       <button className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium transition">
                         + List New Item
@@ -420,7 +476,9 @@ export default function Dashboard() {
                       initial="hidden"
                       animate="visible"
                     >
-                      {localMyItems.map((item) => (
+                      {filteredMyItems.map((item) => {
+                        const realStatus = (item.status === 'ended' || new Date(item.endTime) <= new Date()) ? 'ended' : 'active';
+                        return (
                         <motion.div
                           key={item._id}
                           variants={itemVariants}
@@ -438,16 +496,16 @@ export default function Dashboard() {
                               </h3>
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
-                                  item.status === "active"
+                                  realStatus === "active"
                                     ? "bg-green-500/20 text-green-400"
-                                    : "bg-gray-500/20 text-gray-400"
+                                    : "bg-red-500/20 text-red-400"
                                 }`}
                               >
-                                {item.status}
+                                {realStatus === "active" ? "Active" : "Ended"}
                               </span>
                             </div>
                             <p className="text-gray-400 mb-1">
-                              Current Bid:{" "}
+                              {realStatus === 'ended' ? 'Final Price: ' : 'Current Bid: '}
                               <span className="text-white font-semibold">
                                 ₹{item.currentPrice?.toLocaleString()}
                               </span>
@@ -455,16 +513,34 @@ export default function Dashboard() {
                             <p className="text-xs text-gray-500 mb-1">
                               Starting: ₹{item.startingPrice?.toLocaleString()}
                             </p>
-                            <p className="text-xs text-yellow-400 mb-3">
-                              ⏰ {getTimeRemaining(item.endTime)}
-                            </p>
+                            <p
+                                className={`text-xs mb-3 ${
+                                  realStatus === "ended" ? "text-red-400" : "text-yellow-400"
+                                } flex items-center gap-2`}
+                              >
+                                <svg
+                                  className="w-4 h-4 shrink-0"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="-1 -1 26 26"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 8v4l3 3m9-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                {getTimeRemaining(item.endTime)}
+                              </p>
                             <p className="text-xs text-gray-500">
                               {item.bids?.length || 0} bid
                               {item.bids?.length !== 1 ? "s" : ""}
                             </p>
                           </div>
                         </motion.div>
-                      ))}
+                        );
+                      })}
                     </motion.div>
                   )}
                 </>
@@ -474,7 +550,7 @@ export default function Dashboard() {
               {activeSection === "bids" && (
                 <>
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-semibold">📊 My Active Bids</h2>
+                    <h2 className="text-2xl font-semibold">My Active Bids</h2>
                   </div>
 
                   {!userInfo ? (
@@ -556,7 +632,7 @@ export default function Dashboard() {
                               </p>
 
                               <p className="text-xs text-yellow-400 mb-4 text-center bg-yellow-500/10 py-1.5 rounded">
-                                ⏰ {getTimeRemaining(item.endTime)}
+                                 {getTimeRemaining(item.endTime)}
                               </p>
                               
                               <Link
