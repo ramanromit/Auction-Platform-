@@ -22,16 +22,12 @@ const initWallets = async () => {
   try {
     console.log('Initializing wallet balances...');
     const result = await User.updateMany(
-      { walletBalance: { $exists: false } }, // Target only users without the field
+      { walletBalance: { $exists: false } },
       { $set: { walletBalance: 20000 } }
     );
-    // Also update anyone who has it but it's null or some other check if needed, 
-    // but schema default doesn't apply to existing documents unless loaded and saved.
-    // So let's just forcefully set everyone who doesn't have it explicitly or is missing it.
     
-    // Actually, setting everyone is safer since it's a new feature and we want everyone to have 20000 minimum
     const resultAll = await User.updateMany(
-      {}, // Target all users to be safe given current requirements
+      {}, 
       { $set: { walletBalance: 20000 } }
     );
 

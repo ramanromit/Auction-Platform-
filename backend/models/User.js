@@ -33,7 +33,7 @@ const userSchema = mongoose.Schema(
 );
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  if (!this.password) return false; // Fail if Google User trying to use normal login
+  if (!this.password) return false; 
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

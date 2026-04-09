@@ -41,9 +41,7 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/users/login
-// @access  Public
+//post
 const authUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -68,9 +66,7 @@ const authUser = async (req, res, next) => {
   }
 };
 
-// @desc    Get user profile (protected route example)
-// @route   GET /api/users/profile
-// @access  Private
+//get
 const getUserProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -92,9 +88,7 @@ const getUserProfile = async (req, res, next) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/profile
-// @access  Private
+//put
 const updateUserProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -121,9 +115,7 @@ const updateUserProfile = async (req, res, next) => {
   }
 };
 
-// @desc    Auth user with Google & get token
-// @route   POST /api/users/google
-// @access  Public
+//post
 const googleAuth = async (req, res, next) => {
   try {
     const { token, isLogin } = req.body;

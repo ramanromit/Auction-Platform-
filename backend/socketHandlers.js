@@ -14,7 +14,7 @@ const socketHandlers = (io) => {
         socket.join(auctionId);
         console.log(`Socket ${socket.id} joined auction ${auctionId}`);
         
-        const auction = await AuctionItem.findById(auctionId).populate('user', 'name');
+        const auction = await AuctionItem.findById(auctionId).populate('user', 'name').lean();
         if (auction) {
           // Send current state
           socket.emit('auctionState', {
@@ -54,10 +54,12 @@ const socketHandlers = (io) => {
           return socket.emit('bidError', 'Invalid token');
         }
 
-        const user = await User.findById(decoded.id).select('-password');
+        // Parallel lookup — user + auction at the same time instead of sequential
+        const [user, auction] = await Promise.all([
+          User.findById(decoded.id).select('-password'),
+          AuctionItem.findById(auctionId),
+        ]);
         if (!user) return socket.emit('bidError', 'Invalid user');
-
-        const auction = await AuctionItem.findById(auctionId);
         if (!auction) return socket.emit('bidError', 'Auction not found');
         if (auction.status !== 'active') return socket.emit('bidError', 'Auction has ended');
 

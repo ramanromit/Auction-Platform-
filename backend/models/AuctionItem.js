@@ -66,6 +66,12 @@ const auctionItemSchema = mongoose.Schema(
   }
 );
 
+// Indexes for fast queries — matches the exact query patterns in controllers
+auctionItemSchema.index({ status: 1, endTime: -1 });       // getAuctionItems: filter by status + sort by endTime
+auctionItemSchema.index({ user: 1, createdAt: -1 });       // getMyAuctionItems: filter by user + sort by createdAt
+auctionItemSchema.index({ status: 1, createdAt: -1 });     // general listing sorted by newest
+auctionItemSchema.index({ endTime: 1 });                   // timer-based lookups
+
 const AuctionItem = mongoose.model('AuctionItem', auctionItemSchema);
 
 module.exports = AuctionItem;

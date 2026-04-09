@@ -50,8 +50,10 @@ const getAuctionItems = async (req, res, next) => {
         { status: 'ended', endTime: { $gte: oneDayAgo } },
       ],
     })
+      .select('-bids')  // Don't send full bid history in list view
       .populate('user', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();           // Plain JS objects — 3-5x faster than Mongoose docs
 
     res.json(items);
   } catch (error) {
@@ -65,7 +67,9 @@ const getAuctionItems = async (req, res, next) => {
 const getMyAuctionItems = async (req, res, next) => {
   try {
     const items = await AuctionItem.find({ user: req.user._id })
-      .sort({ createdAt: -1 });
+      .select('-bids')
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json(items);
   } catch (error) {
@@ -79,7 +83,8 @@ const getMyAuctionItems = async (req, res, next) => {
 const getAuctionItemById = async (req, res, next) => {
   try {
     const item = await AuctionItem.findById(req.params.id)
-      .populate('user', 'name email');
+      .populate('user', 'name email')
+      .lean();
 
     if (item) {
       res.json(item);
