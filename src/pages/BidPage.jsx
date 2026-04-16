@@ -70,7 +70,12 @@ export default function BidPage() {
       setIsEnded(true);
       setTimeLeft(0);
       setWinnerName(data.winner || "Unknown");
-      setItem((prev) => prev ? { ...prev, status: "ended", currentPrice: data.finalPrice } : prev);
+      setItem((prev) => prev ? {
+        ...prev,
+        status: "ended",
+        currentPrice: data.finalPrice,
+        auctionResult: data.auctionResult || prev.auctionResult,
+      } : prev);
     });
 
     return () => {
@@ -232,75 +237,165 @@ export default function BidPage() {
                 Minimum next bid: ₹{minimumBid.toLocaleString()}
               </p>
 
+
               {/* TIMER */}
               <div className="mb-6">
                 <p className="text-sm text-gray-400">Auction Ends In</p>
                 <p className={`text-xl font-semibold ${(isEnded || timeLeft <= 0) ? 'text-red-400' : 'text-yellow-400'}`}>
                   {formatTime()}
                 </p>
-                {isEnded && winnerName && (
-                  <p className="text-green-500 mt-2 font-medium">Winner: {winnerName} (₹{currentBid.toLocaleString()})</p>
-                )}
               </div>
 
-              {/* BID FORM */}
-              <form onSubmit={handleBid} className="space-y-4">
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => {
-                    setBidAmount(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="Enter your bid"
-                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/10 text-white focus:outline-none focus:border-red-500"
-                />
+              {/* AUCTION RESULT PANEL (shown when auction ended) */}
+              {(isEnded || item.status === 'ended') && item.auctionResult && item.auctionResult.finalPrice > 0 ? (
+                <div className="space-y-4">
+                  {/* Winner Card */}
+                  <div className="bg-gradient-to-br from-green-500/10 to-emerald-600/5 border border-green-500/30 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <h3 className="text-green-400 font-semibold text-lg">Auction Concluded</h3>
+                    </div>
 
-                {/* Quick Increment Buttons */}
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setBidAmount(String(minimumBid))}
-                    className="px-4 py-2 bg-gray-700 rounded-md text-sm hover:bg-gray-600 transition"
-                  >
-                    +₹1,000
-                  </button>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-gray-400 text-xs mb-1">Winner</p>
+                        <p className="text-white font-semibold">
+                          {item.auctionResult.winnerName || winnerName || 'No winner'}
+                        </p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-gray-400 text-xs mb-1">Final Price</p>
+                        <p className="text-green-400 font-semibold">
+                          ₹{item.auctionResult.finalPrice?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-gray-400 text-xs mb-1">Sold At</p>
+                        <p className="text-white font-medium text-xs">
+                          {item.auctionResult.soldAt
+                            ? new Date(item.auctionResult.soldAt).toLocaleString()
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-gray-400 text-xs mb-1">Total Bids</p>
+                        <p className="text-white font-semibold">
+                          {item.auctionResult.totalBids || item.bids?.length || 0}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setBidAmount(String(currentBid + 5000))}
-                    className="px-4 py-2 bg-gray-700 rounded-md text-sm hover:bg-gray-600 transition"
-                  >
-                    +₹5,000
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setBidAmount(String(currentBid + 10000))}
-                    className="px-4 py-2 bg-gray-700 rounded-md text-sm hover:bg-gray-600 transition"
-                  >
-                    +₹10,000
-                  </button>
+                  {/* Status Badges */}
+                  <div className="flex gap-3">
+                    <div className="flex-1 bg-white/5 rounded-lg p-3 border border-gray-700/50">
+                      <p className="text-gray-400 text-xs mb-1.5">Payment</p>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        item.auctionResult.paymentStatus === 'completed'
+                          ? 'bg-green-500/20 text-green-400'
+                          : item.auctionResult.paymentStatus === 'failed'
+                          ? 'bg-red-500/20 text-red-400'
+                          : item.auctionResult.paymentStatus === 'refunded'
+                          ? 'bg-purple-500/20 text-purple-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          item.auctionResult.paymentStatus === 'completed' ? 'bg-green-400'
+                          : item.auctionResult.paymentStatus === 'failed' ? 'bg-red-400'
+                          : item.auctionResult.paymentStatus === 'refunded' ? 'bg-purple-400'
+                          : 'bg-yellow-400'
+                        }`}></span>
+                        {item.auctionResult.paymentStatus?.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 bg-white/5 rounded-lg p-3 border border-gray-700/50">
+                      <p className="text-gray-400 text-xs mb-1.5">Delivery</p>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        item.auctionResult.deliveryStatus === 'delivered'
+                          ? 'bg-green-500/20 text-green-400'
+                          : item.auctionResult.deliveryStatus === 'shipped' || item.auctionResult.deliveryStatus === 'in_transit'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : item.auctionResult.deliveryStatus === 'returned'
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          item.auctionResult.deliveryStatus === 'delivered' ? 'bg-green-400'
+                          : item.auctionResult.deliveryStatus === 'shipped' || item.auctionResult.deliveryStatus === 'in_transit' ? 'bg-blue-400'
+                          : item.auctionResult.deliveryStatus === 'returned' ? 'bg-red-400'
+                          : 'bg-gray-400'
+                        }`}></span>
+                        {item.auctionResult.deliveryStatus?.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+              ) : (isEnded || item.status === 'ended') ? (
+                /* Ended but no bids / no result data */
+                <div className="bg-white/5 border border-gray-700/50 rounded-xl p-5 text-center">
+                  <p className="text-gray-400">This auction ended with no bids.</p>
+                </div>
+              ) : (
+                /* BID FORM — active auction */
+                <form onSubmit={handleBid} className="space-y-4">
+                  <input
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => {
+                      setBidAmount(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="Enter your bid"
+                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/10 text-white focus:outline-none focus:border-red-500"
+                  />
 
-                {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
-                )}
+                  {/* Quick Increment Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setBidAmount(String(minimumBid))}
+                      className="px-4 py-2 bg-gray-700 rounded-md text-sm hover:bg-gray-600 transition"
+                    >
+                      +₹1,000
+                    </button>
 
-                {successMessage && (
-                  <p className="text-green-500 text-sm">
-                    {successMessage}
-                  </p>
-                )}
+                    <button
+                      type="button"
+                      onClick={() => setBidAmount(String(currentBid + 5000))}
+                      className="px-4 py-2 bg-gray-700 rounded-md text-sm hover:bg-gray-600 transition"
+                    >
+                      +₹5,000
+                    </button>
 
-                <button
-                  type="submit"
-                  disabled={isEnded || timeLeft <= 0}
-                  className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition disabled:bg-gray-600"
-                >
-                  {(isEnded || timeLeft <= 0) ? "Auction Ended" : "Place Bid"}
-                </button>
-              </form>
+                    <button
+                      type="button"
+                      onClick={() => setBidAmount(String(currentBid + 10000))}
+                      className="px-4 py-2 bg-gray-700 rounded-md text-sm hover:bg-gray-600 transition"
+                    >
+                      +₹10,000
+                    </button>
+                  </div>
+
+                  {error && (
+                    <p className="text-red-500 text-sm">{error}</p>
+                  )}
+
+                  {successMessage && (
+                    <p className="text-green-500 text-sm">
+                      {successMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
+                  >
+                    Place Bid
+                  </button>
+                </form>
+              )}
 
               {/* BID HISTORY */}
               {item.bids && item.bids.length > 0 && (

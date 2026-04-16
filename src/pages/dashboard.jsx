@@ -537,6 +537,30 @@ export default function Dashboard() {
                               {item.bids?.length || 0} bid
                               {item.bids?.length !== 1 ? "s" : ""}
                             </p>
+                            {/* Auction Result Summary for ended items */}
+                            {realStatus === "ended" && item.auctionResult && item.auctionResult.finalPrice > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-700/50">
+                                <p className="text-xs text-gray-400 mb-1.5">
+                                  Winner: <span className="text-white font-medium">{item.auctionResult.winnerName || '—'}</span>
+                                </p>
+                                <div className="flex gap-2">
+                                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                    item.auctionResult.paymentStatus === 'completed' ? 'bg-green-500/20 text-green-400'
+                                    : item.auctionResult.paymentStatus === 'failed' ? 'bg-red-500/20 text-red-400'
+                                    : 'bg-yellow-500/20 text-yellow-400'
+                                  }`}>
+                                    {item.auctionResult.paymentStatus?.toUpperCase()}
+                                  </span>
+                                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                    item.auctionResult.deliveryStatus === 'delivered' ? 'bg-green-500/20 text-green-400'
+                                    : item.auctionResult.deliveryStatus === 'shipped' || item.auctionResult.deliveryStatus === 'in_transit' ? 'bg-blue-500/20 text-blue-400'
+                                    : 'bg-gray-500/20 text-gray-400'
+                                  }`}>
+                                    {item.auctionResult.deliveryStatus?.replace('_', ' ').toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </motion.div>
                         );

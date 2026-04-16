@@ -60,6 +60,39 @@ const auctionItemSchema = mongoose.Schema(
         bidderName: { type: String },
       },
     ],
+    auctionResult: {
+      winner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+      },
+      winnerName: {
+        type: String,
+        default: null,
+      },
+      finalPrice: {
+        type: Number,
+        default: 0,
+      },
+      soldAt: {
+        type: Date,
+        default: null,
+      },
+      totalBids: {
+        type: Number,
+        default: 0,
+      },
+      paymentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed', 'refunded'],
+        default: 'pending',
+      },
+      deliveryStatus: {
+        type: String,
+        enum: ['not_shipped', 'shipped', 'in_transit', 'delivered', 'returned'],
+        default: 'not_shipped',
+      },
+    },
   },
   {
     timestamps: true,

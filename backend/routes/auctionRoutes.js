@@ -5,6 +5,7 @@ const {
   getAuctionItems,
   getMyAuctionItems,
   getAuctionItemById,
+  updateAuctionResult,
   deleteAuctionItem,
 } = require('../controllers/auctionController');
 const { protect } = require('../middleware/authMiddleware');
@@ -15,6 +16,7 @@ router.get('/', getAuctionItems);
 // Protected routes
 router.post('/', protect, createAuctionItem);
 router.get('/mine', protect, getMyAuctionItems);
+router.put('/:id/result', protect, updateAuctionResult);
 router.delete('/:id', protect, deleteAuctionItem);
 
 // Public

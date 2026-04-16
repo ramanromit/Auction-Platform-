@@ -146,6 +146,18 @@ async function endAuction(auctionId, io) {
 
     if (auction && auction.status === 'active') {
       auction.status = 'ended';
+
+      // Populate the auctionResult nested object
+      auction.auctionResult = {
+        winner: auction.highestBidder ? auction.highestBidder._id : null,
+        winnerName: auction.highestBidder ? auction.highestBidder.name : null,
+        finalPrice: auction.currentPrice,
+        soldAt: new Date(),
+        totalBids: auction.bids ? auction.bids.length : 0,
+        paymentStatus: auction.highestBidder ? 'pending' : 'failed',
+        deliveryStatus: 'not_shipped',
+      };
+
       await auction.save();
 
       // Credit the seller's wallet if there was a winning bidder
@@ -161,7 +173,8 @@ async function endAuction(auctionId, io) {
 
       io.to(auctionId).emit('auctionEnded', {
         winner: auction.highestBidder ? auction.highestBidder.name : null,
-        finalPrice: auction.currentPrice
+        finalPrice: auction.currentPrice,
+        auctionResult: auction.auctionResult,
       });
       
       io.emit('globalAuctionEnded', { auctionId });

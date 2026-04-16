@@ -84,6 +84,7 @@ const getAuctionItemById = async (req, res, next) => {
   try {
     const item = await AuctionItem.findById(req.params.id)
       .populate('user', 'name email')
+      .populate('auctionResult.winner', 'name email')
       .lean();
 
     if (item) {
@@ -92,6 +93,48 @@ const getAuctionItemById = async (req, res, next) => {
       res.status(404);
       throw new Error('Auction item not found');
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update auction result (payment/delivery status)
+// @route   PUT /api/auctions/:id/result
+// @access  Private (seller only)
+const updateAuctionResult = async (req, res, next) => {
+  try {
+    const item = await AuctionItem.findById(req.params.id);
+
+    if (!item) {
+      res.status(404);
+      throw new Error('Auction item not found');
+    }
+
+    if (item.user.toString() !== req.user._id.toString()) {
+      res.status(401);
+      throw new Error('Not authorized — only the seller can update auction results');
+    }
+
+    if (item.status !== 'ended') {
+      res.status(400);
+      throw new Error('Cannot update results for an auction that has not ended');
+    }
+
+    const { paymentStatus, deliveryStatus } = req.body;
+
+    if (paymentStatus) {
+      item.auctionResult.paymentStatus = paymentStatus;
+    }
+    if (deliveryStatus) {
+      item.auctionResult.deliveryStatus = deliveryStatus;
+    }
+
+    await item.save();
+
+    res.json({
+      message: 'Auction result updated',
+      auctionResult: item.auctionResult,
+    });
   } catch (error) {
     next(error);
   }
@@ -136,5 +179,6 @@ module.exports = {
   getAuctionItems,
   getMyAuctionItems,
   getAuctionItemById,
+  updateAuctionResult,
   deleteAuctionItem,
 };
