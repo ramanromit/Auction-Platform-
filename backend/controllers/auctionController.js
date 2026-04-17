@@ -53,7 +53,7 @@ const getAuctionItems = async (req, res, next) => {
       .select('-bids')  // Don't send full bid history in list view
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
-      .lean();           // Plain JS objects — 3-5x faster than Mongoose docs
+      .lean();        
 
     res.json(items);
   } catch (error) {
