@@ -4,6 +4,10 @@ import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import Navbar from "../components/navbar";
 
+const BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : `http://${window.location.hostname}:5000`;
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -110,7 +114,7 @@ export default function AuthPage() {
           headers: { 'Content-type': 'application/json' },
         };
         const { data } = await axios.post(
-          `http://${window.location.hostname}:5000/api/users/login`,
+          `${BASE_URL}/api/users/login`,
           { email: formData.email.trim(), password: formData.password },
           config
         );
@@ -130,7 +134,7 @@ export default function AuthPage() {
           headers: { 'Content-type': 'application/json' },
         };
         const { data } = await axios.post(
-          `http://${window.location.hostname}:5000/api/users`,
+          `${BASE_URL}/api/users`,
           { name: formData.name.trim(), email: formData.email.trim(), password: formData.password },
           config
         );
@@ -170,7 +174,7 @@ export default function AuthPage() {
       setLoading(true);
       const config = { headers: { 'Content-type': 'application/json' } };
       const { data } = await axios.post(
-        `http://${window.location.hostname}:5000/api/users/google`,
+        `${BASE_URL}/api/users/google`,
         { token: credentialResponse.credential, isLogin },
         config
       );

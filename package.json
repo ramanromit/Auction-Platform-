@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "vite --host",
-    "dev:backend": "npm run dev --prefix backend"
+    "dev:backend": "npm run dev --prefix backend",
+    "build": "vite build"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",

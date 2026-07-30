@@ -1,7 +1,10 @@
 import { createContext, useState, useContext, useCallback } from 'react';
 import axios from 'axios';
 
-const API_URL = `http://${window.location.hostname}:5000/api/auctions`;
+const BASE_URL = import.meta.env.VITE_API_URL 
+    ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+    : `http://${window.location.hostname}:5000`;
+const API_URL = `${BASE_URL}/api/auctions`;
 const AuctionContext = createContext();
 
 export const useAuction = () => {

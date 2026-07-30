@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import Navbar from "../components/navbar";
 import { useAuction } from "../context/AuctionContext";
 
+const BASE_URL = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') 
+  : `http://${window.location.hostname}:5000`;
+
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { myItems, fetchMyItems, deleteItem } = useAuction();
@@ -46,7 +50,7 @@ export default function SettingsPage() {
       };
 
       const { data } = await axios.put(
-        `http://${window.location.hostname}:5000/api/users/profile`,
+        `${BASE_URL}/api/users/profile`,
         { name },
         config
       );
